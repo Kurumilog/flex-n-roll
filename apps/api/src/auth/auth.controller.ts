@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Req, Res } from "@nestjs/common";
-import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { ApiOperation, ApiTags, ApiBody, ApiCookieAuth } from "@nestjs/swagger";
 import type { Request, Response } from "express";
 
 import { AuthService } from "./auth.service";
@@ -9,9 +9,10 @@ import { LoginDto } from "./dto/login.dto";
 @ApiTags("auth")
 @Controller("auth")
 export class AuthController {
-  private readonly authService = new AuthService();
+  constructor(private readonly authService: AuthService) {}
 
   @ApiOperation({ summary: "Login with email/password" })
+  @ApiBody({ type: LoginDto })
   @Post("login")
   login(
     @Body() payload: LoginDto,
@@ -30,12 +31,14 @@ export class AuthController {
   }
 
   @ApiOperation({ summary: "Current authenticated user" })
+  @ApiCookieAuth("flexnroll_session")
   @Get("me")
   me(@Req() request: Request) {
     return this.authService.getMe(request);
   }
 
   @ApiOperation({ summary: "Logout and clear session cookie" })
+  @ApiCookieAuth("flexnroll_session")
   @Post("logout")
   logout(
     @Req() request: Request,

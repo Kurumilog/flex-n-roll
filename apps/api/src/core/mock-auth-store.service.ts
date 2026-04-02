@@ -47,11 +47,7 @@ export class MockAuthStoreService {
 
   private sessions = new Map<string, SessionRecord>();
 
-  loginWithPassword(email: string, password: string): SessionResponse {
-    if (password !== "demo12345") {
-      throw new UnauthorizedException("Неверный пароль. Для демо используйте demo12345.");
-    }
-
+  loginWithEmail(email: string): SessionResponse {
     const user = this.ensureUser(email);
     return this.createSession(user);
   }

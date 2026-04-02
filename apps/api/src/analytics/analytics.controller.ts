@@ -6,7 +6,7 @@ import { AnalyticsService, type CategoryDistribution, type DealStats } from "./a
 @ApiTags("analytics")
 @Controller("analytics")
 export class AnalyticsController {
-  private readonly analyticsService = new AnalyticsService();
+  constructor(private readonly analyticsService: AnalyticsService) {}
 
   @ApiOperation({ summary: "Get applications distribution by category" })
   @ApiOkResponse({

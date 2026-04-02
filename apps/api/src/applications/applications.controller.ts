@@ -8,7 +8,7 @@ import { ApplicationsService, type Application } from "./applications.service";
 @ApiTags("applications")
 @Controller("applications")
 export class ApplicationsController {
-  private readonly applicationsService = new ApplicationsService();
+  constructor(private readonly applicationsService: ApplicationsService) {}
 
   @ApiOperation({ summary: "Get all applications with filters" })
   @ApiOkResponse({
@@ -24,15 +24,13 @@ export class ApplicationsController {
   @ApiBadRequestResponse({ description: "Invalid filter parameters" })
   @Get()
   findAll(@Query() filters: ApplicationFiltersDto) {
-    const result = this.applicationsService.findAll({
+    return this.applicationsService.findAll({
       intent: filters.intent,
       urgency: filters.urgency,
       status: filters.status,
       limit: filters.limit,
       offset: filters.offset,
     });
-
-    return result;
   }
 
   @ApiOperation({ summary: "Get application by ID" })

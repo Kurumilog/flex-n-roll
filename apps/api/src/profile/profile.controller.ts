@@ -8,7 +8,7 @@ import { ProfileService } from "./profile.service";
 @ApiTags("profile")
 @Controller("profile")
 export class ProfileController {
-  private readonly profileService = new ProfileService();
+  constructor(private readonly profileService: ProfileService) {}
 
   @ApiOperation({ summary: "Current user profile" })
   @Get()

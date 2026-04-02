@@ -6,7 +6,7 @@ import { PipelineService, type PipelineStatus } from "./pipeline.service";
 @ApiTags("pipeline")
 @Controller("pipeline")
 export class PipelineController {
-  private readonly pipelineService = new PipelineService();
+  constructor(private readonly pipelineService: PipelineService) {}
 
   @ApiOperation({ summary: "Get current pipeline processing status" })
   @ApiOkResponse({

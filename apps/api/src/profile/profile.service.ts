@@ -7,7 +7,7 @@ import { UpdateProfileDto } from "./dto/update-profile.dto";
 
 @Injectable()
 export class ProfileService {
-  private readonly store = new MockAuthStoreService();
+  constructor(private readonly store: MockAuthStoreService) {}
 
   getProfile(request: Request) {
     const sessionId = this.getSessionId(request);

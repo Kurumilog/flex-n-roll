@@ -10,19 +10,19 @@ enum Environment {
 export class EnvironmentVariables {
   @IsEnum(Environment)
   @IsOptional()
-  NODE_ENV?: Environment = Environment.Development;
+  NODE_ENV?: Environment;
 
   @IsNumber()
   @IsOptional()
-  PORT?: number = 3001;
+  PORT?: number;
 
   @IsString()
   @IsOptional()
-  FRONTEND_ORIGIN?: string = 'http://localhost:3000';
+  FRONTEND_ORIGIN?: string;
 
   @IsString()
   @IsOptional()
-  DEMO_PASSWORD?: string = 'demo12345';
+  DEMO_PASSWORD?: string;
 
   @IsString()
   @IsOptional()
@@ -38,15 +38,27 @@ export class EnvironmentVariables {
 }
 
 export function validate(config: Record<string, unknown>) {
-  const validatedConfig = plainToClass(EnvironmentVariables, config, {
+  // Pre-process config to convert string numbers to actual numbers
+  const processedConfig: Record<string, unknown> = { ...config };
+  if (typeof processedConfig.PORT === 'string') {
+    const portNum = Number(processedConfig.PORT);
+    if (!isNaN(portNum)) {
+      processedConfig.PORT = portNum;
+    }
+  }
+
+  const validatedConfig = plainToClass(EnvironmentVariables, processedConfig, {
     enableImplicitConversion: true,
   });
+  
   const errors = validateSync(validatedConfig, {
-    skipMissingProperties: false,
+    skipMissingProperties: true,
   });
 
   if (errors.length > 0) {
-    throw new Error(errors.toString());
+    const errorStr = errors.toString();
+    console.error('Config validation errors:', errorStr);
+    throw new Error(errorStr);
   }
   return validatedConfig;
 }

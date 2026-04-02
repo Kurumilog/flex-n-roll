@@ -8,10 +8,20 @@ import { LoginDto } from "./dto/login.dto";
 
 @Injectable()
 export class AuthService {
-  private readonly store = new MockAuthStoreService();
+  private readonly demoPassword: string;
+
+  constructor(
+    private readonly store: MockAuthStoreService,
+  ) {
+    this.demoPassword = process.env.DEMO_PASSWORD || 'demo12345';
+  }
 
   login(payload: LoginDto, response: Response) {
-    const session = this.store.loginWithPassword(payload.email, payload.password);
+    if (payload.password !== this.demoPassword) {
+      throw new UnauthorizedException("Неверный пароль. Для демо используйте demo12345.");
+    }
+
+    const session = this.store.loginWithEmail(payload.email);
     this.setSessionCookie(response, session.sessionId);
     return session;
   }
