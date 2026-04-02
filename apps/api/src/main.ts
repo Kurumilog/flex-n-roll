@@ -1,15 +1,38 @@
 import "reflect-metadata";
 
-import { ValidationPipe } from "@nestjs/common";
+import { ExceptionFilter, ValidationPipe } from "@nestjs/common";
+import { ArgumentsHost, Catch } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
+import { Response } from "express";
 
 import { AppModule } from "./app.module";
+
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
+  catch(exception: unknown, host: ArgumentsHost) {
+    const ctx = host.switchToHttp();
+    const response = ctx.getResponse<Response>();
+    const request = ctx.getRequest<Request>();
+
+    console.error("❌ Exception caught:", exception);
+    console.error("   Path:", request.url);
+    console.error("   Method:", request.method);
+
+    response.status(500).json({
+      statusCode: 500,
+      message: "Internal server error",
+      error: exception instanceof Error ? exception.message : "Unknown error",
+      stack: exception instanceof Error ? exception.stack : undefined,
+    });
+  }
+}
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  app.useGlobalFilters(new AllExceptionsFilter());
   app.setGlobalPrefix("api");
   app.use(cookieParser());
   app.enableCors({

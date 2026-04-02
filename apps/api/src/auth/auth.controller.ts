@@ -9,7 +9,7 @@ import { LoginDto } from "./dto/login.dto";
 @ApiTags("auth")
 @Controller("auth")
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  private readonly authService = new AuthService();
 
   @ApiOperation({ summary: "Login with email/password" })
   @Post("login")

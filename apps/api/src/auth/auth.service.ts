@@ -8,7 +8,7 @@ import { LoginDto } from "./dto/login.dto";
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly store: MockAuthStoreService) {}
+  private readonly store = new MockAuthStoreService();
 
   login(payload: LoginDto, response: Response) {
     const session = this.store.loginWithPassword(payload.email, payload.password);

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(training.bitrix24.ru)",
+      "WebFetch(apidocs.bitrix24.com)",
+      "WebSearch",
+      "Bash(ls *)",
+      "Bash(npx *)",
+      "Bash(mkdir *)",
+      "Bash(npm install *)",
+      "Bash(pnpm install)"
+    ]
+  },
+  "$version": 3
+}

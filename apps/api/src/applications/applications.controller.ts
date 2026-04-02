@@ -8,7 +8,7 @@ import { ApplicationsService, type Application } from "./applications.service";
 @ApiTags("applications")
 @Controller("applications")
 export class ApplicationsController {
-  constructor(private readonly applicationsService: ApplicationsService) {}
+  private readonly applicationsService = new ApplicationsService();
 
   @ApiOperation({ summary: "Get all applications with filters" })
   @ApiOkResponse({

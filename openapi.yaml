@@ -1,0 +1,260 @@
+openapi: 3.0.3
+info:
+  title: FLEX-N-ROLL API (Stub v1)
+  version: 0.1.0
+  description: Minimal auth/profile backend contract for web integration.
+servers:
+  - url: http://localhost:3001
+paths:
+  /api/auth/login:
+    post:
+      summary: Login with email/password
+      tags: [auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Session established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSessionResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/auth/bitrix:
+    post:
+      summary: Stub login through Bitrix24
+      tags: [auth]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BitrixLoginRequest'
+      responses:
+        '200':
+          description: Session established
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthSessionResponse'
+
+  /api/auth/me:
+    get:
+      summary: Get current authenticated user
+      tags: [auth]
+      security:
+        - SessionCookie: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthMeResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/auth/logout:
+    post:
+      summary: Clear session
+      tags: [auth]
+      security:
+        - SessionCookie: []
+      responses:
+        '200':
+          description: Logout completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+
+  /api/profile:
+    get:
+      summary: Get profile
+      tags: [profile]
+      security:
+        - SessionCookie: []
+      responses:
+        '200':
+          description: Current profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+    patch:
+      summary: Update profile (stub)
+      tags: [profile]
+      security:
+        - SessionCookie: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiError'
+
+  /api/health:
+    get:
+      summary: Healthcheck
+      tags: [health]
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+                  service:
+                    type: string
+                    example: flex-n-roll-api
+
+components:
+  securitySchemes:
+    SessionCookie:
+      type: apiKey
+      in: cookie
+      name: flexnroll_session
+  schemas:
+    AuthRole:
+      type: string
+      enum: [manager, supervisor, admin]
+    AuthUser:
+      type: object
+      required: [id, name, email, role, department, timezone]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        role:
+          $ref: '#/components/schemas/AuthRole'
+        department:
+          type: string
+        timezone:
+          type: string
+        avatar:
+          type: string
+          format: uri
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+    BitrixLoginRequest:
+      type: object
+      properties:
+        portalUrl:
+          type: string
+          format: uri
+    AuthSessionResponse:
+      type: object
+      required: [sessionId, user, expiresAt]
+      properties:
+        sessionId:
+          type: string
+        user:
+          $ref: '#/components/schemas/AuthUser'
+        expiresAt:
+          type: string
+          format: date-time
+    AuthMeResponse:
+      type: object
+      required: [user]
+      properties:
+        user:
+          $ref: '#/components/schemas/AuthUser'
+    Profile:
+      allOf:
+        - $ref: '#/components/schemas/AuthUser'
+        - type: object
+          properties:
+            bio:
+              type: string
+              maxLength: 280
+    ProfileResponse:
+      type: object
+      required: [profile]
+      properties:
+        profile:
+          $ref: '#/components/schemas/Profile'
+    UpdateProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        department:
+          type: string
+        timezone:
+          type: string
+        bio:
+          type: string
+          maxLength: 280
+    ApiError:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+        statusCode:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string

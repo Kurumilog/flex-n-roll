@@ -6,7 +6,7 @@ import { MetricsService, type TodayMetrics } from "./metrics.service";
 @ApiTags("metrics")
 @Controller("metrics")
 export class MetricsController {
-  constructor(private readonly metricsService: MetricsService) {}
+  private readonly metricsService = new MetricsService();
 
   @ApiOperation({ summary: "Get today's KPI metrics" })
   @ApiOkResponse({

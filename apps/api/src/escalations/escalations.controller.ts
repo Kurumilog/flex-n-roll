@@ -6,7 +6,7 @@ import { EscalationsService, type Escalation } from "./escalations.service";
 @ApiTags("escalations")
 @Controller("escalations")
 export class EscalationsController {
-  constructor(private readonly escalationsService: EscalationsService) {}
+  private readonly escalationsService = new EscalationsService();
 
   @ApiOperation({ summary: "Get SLA escalations list" })
   @ApiOkResponse({
