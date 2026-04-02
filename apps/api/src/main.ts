@@ -7,6 +7,7 @@ import {
   Logger,
 } from "@nestjs/common";
 import { ArgumentsHost, Catch } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 import cookieParser from "cookie-parser";
@@ -72,14 +73,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
   app.useGlobalFilters(new HttpExceptionFilter());
   app.setGlobalPrefix("api");
   app.use(cookieParser());
   app.enableCors({
-    origin: (process.env.FRONTEND_ORIGIN ?? "http://localhost:3000")
-      .split(",")
-      .map((origin) => origin.trim()),
+    origin: configService.get<string>('FRONTEND_ORIGIN')?.split(',') || ['http://localhost:3000'],
     credentials: true,
   });
   app.useGlobalPipes(
@@ -126,7 +126,7 @@ async function bootstrap() {
     customSiteTitle: "FLEX-N-ROLL API Docs",
   });
 
-  const port = Number(process.env.PORT ?? "3001");
+  const port = configService.get<number>('PORT') || 3001;
   await app.listen(port);
 
   console.log(`🚀 API running on http://localhost:${port}`);

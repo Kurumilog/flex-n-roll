@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { ConfigModule } from "@nestjs/config";
 
 import { AnalyticsModule } from "./analytics/analytics.module";
 import { ApplicationsModule } from "./applications/applications.module";
@@ -8,9 +9,15 @@ import { HealthModule } from "./health/health.module";
 import { MetricsModule } from "./metrics/metrics.module";
 import { PipelineModule } from "./pipeline/pipeline.module";
 import { ProfileModule } from "./profile/profile.module";
+import { validate } from "./config/app.validation";
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: ['.env.local', '.env'],
+      validate,
+    }),
     AuthModule,
     ProfileModule,
     HealthModule,
