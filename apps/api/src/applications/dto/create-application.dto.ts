@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsString, IsOptional, IsUrl, MinLength, IsUUID } from "class-validator";
+import { IsEnum, IsString, IsOptional, IsUrl, MinLength, IsUUID, IsNumber, Min, Max, ValidateNested } from "class-validator";
+import { Type } from "class-transformer";
 
 export enum ApplicationSource {
   EMAIL = "email",
@@ -70,9 +71,14 @@ export class CreateApplicationDto {
   complexity!: ApplicationComplexity;
 
   @ApiProperty({ example: 85, minimum: 0, maximum: 100 })
+  @IsNumber()
+  @Min(0)
+  @Max(100)
   aiConfidence!: number;
 
   @ApiProperty({ type: AssignedUserDto })
+  @ValidateNested()
+  @Type(() => AssignedUserDto)
   assignedTo!: AssignedUserDto;
 
   @ApiPropertyOptional({ example: "BX-12345" })
