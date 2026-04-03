@@ -114,6 +114,7 @@ async function bootstrap() {
     .addTag("analytics", "Analytics and statistics")
     .addTag("auth", "Authentication endpoints")
     .addTag("profile", "User profile management")
+    .addTag("escalations", "SLA escalation endpoints")
     .addTag("health", "Health check endpoints")
     .build();
 
