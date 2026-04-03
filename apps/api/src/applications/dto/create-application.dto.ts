@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsString, IsOptional, IsUrl, MinLength } from "class-validator";
+import { IsEnum, IsString, IsOptional, IsUrl, MinLength, IsUUID } from "class-validator";
 
 export enum ApplicationSource {
   EMAIL = "email",
@@ -33,6 +33,7 @@ export enum ApplicationStatus {
 
 export class AssignedUserDto {
   @ApiProperty({ example: "usr-123" })
+  @IsUUID()
   @IsString()
   id!: string;
 
