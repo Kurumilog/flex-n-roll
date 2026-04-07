@@ -1,0 +1,2 @@
+## Qwen Added Memories
+- KNOWN BUG: NestJS Swagger circular dependency error on "email" property. API typecheck passes but runtime fails with: `Error: A circular dependency has been detected (property key: "email")`. Need to fix by excluding express.Request/Response from Swagger introspection or adding explicit @ApiResponse schemas to all endpoints. Files involved: auth.controller.ts, profile.controller.ts, applications.controller.ts.

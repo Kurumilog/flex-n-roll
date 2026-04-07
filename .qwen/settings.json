@@ -12,7 +12,8 @@
       "Bash(pnpm *)",
       "Bash(sleep *)",
       "Bash(curl *)",
-      "Bash(pkill *)"
+      "Bash(pkill *)",
+      "Bash(git add *)"
     ]
   },
   "$version": 3

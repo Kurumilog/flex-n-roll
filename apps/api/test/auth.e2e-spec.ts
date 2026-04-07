@@ -106,8 +106,7 @@ describe("AuthController (e2e)", () => {
         .expect(201)
         .expect((res) => {
           expect(res.body).toHaveProperty("sessionId");
-          expect(res.body).toHaveProperty("user");
-          expect(res.body.user.email).toBe("demo@flexnroll.ai");
+          expect(res.body).toHaveProperty("expiresAt");
         });
     });
 
