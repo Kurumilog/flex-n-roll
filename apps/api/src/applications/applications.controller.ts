@@ -36,7 +36,6 @@ export class ApplicationsController {
   @ApiOperation({ summary: "Get application by ID" })
   @ApiOkResponse({
     description: "Application found",
-    type: Object,
   })
   @Get(":id")
   findOne(@Param("id") id: string) {

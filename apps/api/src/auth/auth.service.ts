@@ -4,7 +4,6 @@ import type { Request, Response } from "express";
 import { SESSION_COOKIE_NAME, SESSION_TTL_MS } from "../common/session.constants";
 import { AppConfigService } from "../config/app.config";
 import { MockAuthStoreService } from "../core/mock-auth-store.service";
-import { BitrixLoginDto } from "./dto/bitrix-login.dto";
 import { LoginDto } from "./dto/login.dto";
 
 @Injectable()
@@ -16,18 +15,20 @@ export class AuthService {
 
   login(payload: LoginDto, response: Response) {
     if (payload.password !== this.config.demoPassword) {
-      throw new UnauthorizedException("Неверный пароль. Для демо используйте demo12345.");
+      throw new UnauthorizedException(
+        "Неверный пароль. Для демо используйте demo12345.",
+      );
     }
 
     const session = this.store.loginWithEmail(payload.email);
     this.setSessionCookie(response, session.sessionId);
-    return session;
+    return { sessionId: session.sessionId, expiresAt: session.expiresAt };
   }
 
-  loginWithBitrix(_payload: BitrixLoginDto, response: Response) {
+  loginWithBitrix(response: Response) {
     const session = this.store.loginWithBitrix();
     this.setSessionCookie(response, session.sessionId);
-    return session;
+    return { sessionId: session.sessionId, expiresAt: session.expiresAt };
   }
 
   getMe(request: Request) {

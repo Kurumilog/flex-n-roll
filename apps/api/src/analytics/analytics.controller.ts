@@ -31,7 +31,6 @@ export class AnalyticsController {
   @ApiOperation({ summary: "Get deal statistics by Bitrix24 deal ID" })
   @ApiOkResponse({
     description: "Deal stats retrieved successfully",
-    type: Object,
   })
   @ApiNotFoundResponse({ description: "Deal not found" })
   @Get("deal/:id")

@@ -11,7 +11,6 @@ export class PipelineController {
   @ApiOperation({ summary: "Get current pipeline processing status" })
   @ApiOkResponse({
     description: "Pipeline status retrieved successfully",
-    type: Object,
   })
   @Get("status")
   getStatus(): PipelineStatus {
