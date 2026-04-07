@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Query, Body } from "@nestjs/common";
+import { Controller, Get, Post, Param, Query, Body, NotFoundException } from "@nestjs/common";
 import { ApiOperation, ApiTags, ApiOkResponse, ApiBadRequestResponse } from "@nestjs/swagger";
 
 import { ApplicationFiltersDto } from "./dto/application-filters.dto";
@@ -43,7 +43,7 @@ export class ApplicationsController {
     const application = this.applicationsService.findOne(id);
 
     if (!application) {
-      return { error: "Application not found" };
+      throw new NotFoundException("Application not found");
     }
 
     return application;

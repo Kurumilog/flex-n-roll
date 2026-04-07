@@ -76,7 +76,7 @@ export class CreateApplicationDto {
   @Max(100)
   aiConfidence!: number;
 
-  @ApiProperty({ type: AssignedUserDto })
+  @ApiProperty({ type: () => AssignedUserDto })
   @ValidateNested()
   @Type(() => AssignedUserDto)
   assignedTo!: AssignedUserDto;

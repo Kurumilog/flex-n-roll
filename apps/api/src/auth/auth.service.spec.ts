@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { UnauthorizedException } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { MockAuthStoreService } from "../core/mock-auth-store.service";
+import { AppConfigService } from "../config/app.config";
 
 describe("AuthService", () => {
   let service: AuthService;
@@ -16,6 +17,21 @@ describe("AuthService", () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
+        {
+          provide: AppConfigService,
+          useValue: {
+            demoPassword: process.env.DEMO_PASSWORD || "demo12345",
+            nodeEnv: "test",
+            port: 3001,
+            frontendOrigin: "http://localhost:3000",
+            groqApiKey: undefined,
+            bitrix24WebhookUrl: undefined,
+            jwtSecret: undefined,
+            isDevelopment: false,
+            isProduction: false,
+            isTest: true,
+          },
+        },
         {
           provide: MockAuthStoreService,
           useValue: {

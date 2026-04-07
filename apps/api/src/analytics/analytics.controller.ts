@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from "@nestjs/common";
+import { Controller, Get, Param, NotFoundException } from "@nestjs/common";
 import { ApiOperation, ApiTags, ApiOkResponse, ApiNotFoundResponse } from "@nestjs/swagger";
 
 import { AnalyticsService, type CategoryDistribution, type DealStats } from "./analytics.service";
@@ -35,11 +35,11 @@ export class AnalyticsController {
   })
   @ApiNotFoundResponse({ description: "Deal not found" })
   @Get("deal/:id")
-  getDealStats(@Param("id") id: string): DealStats | { error: string } {
+  getDealStats(@Param("id") id: string): DealStats {
     const stats = this.analyticsService.getDealStats(id);
 
     if (!stats) {
-      return { error: "Deal not found" };
+      throw new NotFoundException("Deal not found");
     }
 
     return stats;

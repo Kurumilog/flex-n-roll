@@ -1,12 +1,14 @@
 import "reflect-metadata";
 
 import {
-  ExceptionFilter,
   ValidationPipe,
-  HttpStatus,
   Logger,
+  HttpStatus,
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
 } from "@nestjs/common";
-import { ArgumentsHost, Catch } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
@@ -16,57 +18,59 @@ import { Request, Response } from "express";
 import { AppModule } from "./app.module";
 
 /**
- * Global exception filter that only logs server errors (500)
- * and skips expected errors like 404 Not Found and 401 Unauthorized
+ * Global exception filter that delegates to NestJS default behavior
+ * for HttpExceptions and only logs unexpected server errors (500).
+ * Produces standard NestJS error response format:
+ *   { statusCode, message, error }
  */
 @Catch()
-export class HttpExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(HttpExceptionFilter.name);
+export class GlobalExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(GlobalExceptionFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    // Extract status code from exception
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = "Internal server error";
+    if (exception instanceof HttpException) {
+      const status = exception.getStatus();
 
-    if (
-      exception &&
-      typeof exception === "object" &&
-      "status" in exception
-    ) {
-      status = (exception as any).status;
-      message =
-        (exception as any).response?.message ||
-        (exception as any).message ||
-        message;
-    }
+      // Only log unexpected 500 errors, skip expected client errors
+      if (status >= 500) {
+        this.logger.error(
+          `${exception.message}`,
+          `${request.method} ${request.url}`,
+        );
+      }
 
-    // Skip logging for 404 and 401 - these are expected
-    if (status === HttpStatus.NOT_FOUND || status === HttpStatus.UNAUTHORIZED) {
-      response.status(status).json({
-        statusCode: status,
-        message,
-      });
+      const responseBody = exception.getResponse();
+      const errorResponse =
+        typeof responseBody === "string"
+          ? { statusCode: status, message: responseBody, error: exception.name }
+          : {
+              statusCode: status,
+              ...(responseBody as Record<string, unknown>),
+            };
+
+      response.status(status).json(errorResponse);
       return;
     }
 
-    // Log only server errors (500)
+    // Unknown exception — treat as 500
+    const message =
+      exception instanceof Error ? exception.message : "Unknown error";
+
     this.logger.error(
-      `Server Error: ${message}`,
+      `Unhandled exception: ${message}`,
       `${request.method} ${request.url}`,
+      exception instanceof Error ? exception.stack : undefined,
     );
 
-    response.status(status).json({
-      statusCode: status,
-      message: "Internal server error",
-      error: exception instanceof Error ? exception.message : "Unknown error",
-      stack:
-        process.env.NODE_ENV === "development" && exception instanceof Error
-          ? exception.stack
-          : undefined,
+    const isDev = process.env.NODE_ENV === "development";
+    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message: isDev ? message : "Internal server error",
+      ...(isDev && exception instanceof Error ? { error: exception.stack } : {}),
     });
   }
 }
@@ -75,7 +79,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const configService = app.get(ConfigService);
 
-  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new GlobalExceptionFilter());
   app.setGlobalPrefix("api");
   app.use(cookieParser());
   app.enableCors({

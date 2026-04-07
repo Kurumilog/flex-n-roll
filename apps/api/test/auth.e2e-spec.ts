@@ -7,6 +7,7 @@ import {
   ArgumentsHost,
   HttpStatus,
   Logger,
+  HttpException,
 } from "@nestjs/common";
 import request from "supertest";
 import cookieParser from "cookie-parser";
@@ -15,49 +16,55 @@ import { AppModule } from "../src/app.module";
 
 /**
  * Global exception filter matching main.ts configuration.
- * Only logs server errors (500) and skips expected 404/401 errors.
+ * Delegates to NestJS default behavior for HttpExceptions
+ * and only logs unexpected server errors (500).
  */
 @Catch()
-class HttpExceptionFilter implements ExceptionFilter {
-  private readonly logger = new Logger(HttpExceptionFilter.name);
+class GlobalExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(GlobalExceptionFilter.name);
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = "Internal server error";
+    if (exception instanceof HttpException) {
+      const status = exception.getStatus();
 
-    if (exception && typeof exception === "object" && "status" in exception) {
-      status = (exception as any).status;
-      message =
-        (exception as any).response?.message ||
-        (exception as any).message ||
-        message;
-    }
+      if (status >= 500) {
+        this.logger.error(
+          `${exception.message}`,
+          `${request.method} ${request.url}`,
+        );
+      }
 
-    if (status === HttpStatus.NOT_FOUND || status === HttpStatus.UNAUTHORIZED) {
-      response.status(status).json({
-        statusCode: status,
-        message,
-      });
+      const responseBody = exception.getResponse();
+      const errorResponse =
+        typeof responseBody === "string"
+          ? { statusCode: status, message: responseBody, error: exception.name }
+          : {
+              statusCode: status,
+              ...(responseBody as Record<string, unknown>),
+            };
+
+      response.status(status).json(errorResponse);
       return;
     }
 
+    const message =
+      exception instanceof Error ? exception.message : "Unknown error";
+
     this.logger.error(
-      `Server Error: ${message}`,
+      `Unhandled exception: ${message}`,
       `${request.method} ${request.url}`,
+      exception instanceof Error ? exception.stack : undefined,
     );
 
-    response.status(status).json({
-      statusCode: status,
-      message: "Internal server error",
-      error: exception instanceof Error ? exception.message : "Unknown error",
-      stack:
-        process.env.NODE_ENV === "development" && exception instanceof Error
-          ? exception.stack
-          : undefined,
+    const isDev = process.env.NODE_ENV === "development";
+    response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message: isDev ? message : "Internal server error",
+      ...(isDev && exception instanceof Error ? { error: exception.stack } : {}),
     });
   }
 }
@@ -71,7 +78,7 @@ describe("AuthController (e2e)", () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
-    app.useGlobalFilters(new HttpExceptionFilter());
+    app.useGlobalFilters(new GlobalExceptionFilter());
     app.setGlobalPrefix("api");
     app.useGlobalPipes(
       new ValidationPipe({

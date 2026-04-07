@@ -2,22 +2,20 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import type { Request, Response } from "express";
 
 import { SESSION_COOKIE_NAME, SESSION_TTL_MS } from "../common/session.constants";
+import { AppConfigService } from "../config/app.config";
 import { MockAuthStoreService } from "../core/mock-auth-store.service";
 import { BitrixLoginDto } from "./dto/bitrix-login.dto";
 import { LoginDto } from "./dto/login.dto";
 
 @Injectable()
 export class AuthService {
-  private readonly demoPassword: string;
-
   constructor(
     private readonly store: MockAuthStoreService,
-  ) {
-    this.demoPassword = process.env.DEMO_PASSWORD || 'demo12345';
-  }
+    private readonly config: AppConfigService,
+  ) {}
 
   login(payload: LoginDto, response: Response) {
-    if (payload.password !== this.demoPassword) {
+    if (payload.password !== this.config.demoPassword) {
       throw new UnauthorizedException("Неверный пароль. Для демо используйте demo12345.");
     }
 
