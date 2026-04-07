@@ -158,10 +158,10 @@ private readonly service = new MyService();
 
 ## 📋 Следующие шаги
 
-1. **Frontend интеграция** — удалить MSW mocks, подключить реальный API
+1. **Frontend** — создать новый Vite + React 18 + TypeScript + Tailwind SPA
 2. **Groq AI** — реализовать классификацию заявок через Llama 3.3 70B
 3. **Bitrix24** — sync сделок через REST API webhook
-4. **Database** — Prisma + PostgreSQL для хранения заявок
+4. **Database** — Prisma + PostgreSQL (Supabase) для хранения заявок
 5. **Redis + BullMQ** — очереди для асинхронной обработки
 6. **Socket.io** — real-time обновления вместо polling
 
@@ -173,3 +173,5 @@ private readonly service = new MyService();
 - **Mock заявок**: 12
 - **Swagger тегов**: 8
 - **Коммитов в ветке**: 10+
+- **Стек**: NestJS + Prisma + PostgreSQL (Supabase)
+- **Frontend (план)**: React 18 + TypeScript + Vite + Tailwind + Zustand + framer-motion

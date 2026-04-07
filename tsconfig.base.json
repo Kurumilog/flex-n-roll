@@ -20,9 +20,6 @@
     "verbatimModuleSyntax": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": [
-        "apps/web/src/*"
-      ],
       "@flex-n-roll/shared-types": [
         "packages/shared-types/src/index.ts"
       ],

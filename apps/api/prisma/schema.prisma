@@ -1,0 +1,56 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Application {
+  id           String   @id @default(uuid())
+  source       String   // email, facebook, webform
+  intent       String   // commercial, support, technical
+  urgency      String   // low, medium, high
+  status       String   // processing, assigned, escalated
+  description  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("applications")
+}
+
+model Metric {
+  id              String   @id @default(uuid())
+  totalProcessed  Int      @default(0)
+  aiConfidenceAvg Float    @default(0)
+  autoRouted      Int      @default(0)
+  manualReview    Int      @default(0)
+  slaCompliance   Float    @default(0)
+  date            DateTime @default(now())
+
+  @@map("metrics")
+}
+
+model Pipeline {
+  id          String   @id @default(uuid())
+  stepName    String
+  stepOrder   Int
+  status      String
+  updatedAt   DateTime @updatedAt
+
+  @@map("pipeline")
+}
+
+model Escalation {
+  id          String   @id @default(uuid())
+  type        String   // sla_breach, complexity_high
+  description String?
+  status      String   // open, resolved
+  createdAt   DateTime @default(now())
+
+  @@map("escalations")
+}
