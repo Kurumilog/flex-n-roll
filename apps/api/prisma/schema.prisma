@@ -1,5 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// FlexRouter AI — Prisma Schema
+// https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -10,47 +10,125 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Application {
-  id           String   @id @default(uuid())
-  source       String   // email, facebook, webform
-  intent       String   // commercial, support, technical
-  urgency      String   // low, medium, high
-  status       String   // processing, assigned, escalated
-  description  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+// ============================================================
+// Employees — менеджеры компании
+// ============================================================
+model Employee {
+  id                  Int       @id              // bitrix24 ID (из employees.json)
+  name                String
+  lastName            String
+  email               String    @unique
+  phone               String?
+  position            String?
+  department          String?
+  kpiScore            Float     @default(50.0)  // 0–100
+  dealsWon            Int       @default(0)
+  dealsLost           Int       @default(0)
+  avgResponseMinutes  Float     @default(0)
+  isAvailable         Boolean   @default(true)
+  workStart           String    @default("09:00") // HH:mm
+  workEnd             String    @default("18:00")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
-  @@map("applications")
+  assignments         Assignment[]
+  kpiHistory          KpiHistory[]
+  mailings            Mailing[]
+
+  @@map("employees")
 }
 
-model Metric {
-  id              String   @id @default(uuid())
-  totalProcessed  Int      @default(0)
-  aiConfidenceAvg Float    @default(0)
-  autoRouted      Int      @default(0)
-  manualReview    Int      @default(0)
-  slaCompliance   Float    @default(0)
-  date            DateTime @default(now())
+// "Личный менеджер" — кто работал с этим клиентом
+model Assignment {
+  id               Int       @id @default(autoincrement())
+  clientPhone      String?
+  clientEmail      String?
+  clientBitrixId   String?   // ID контакта в Bitrix24
+  employeeId       Int
+  employee         Employee  @relation(fields: [employeeId], references: [id])
+  interactionCount Int       @default(1)
+  lastInteraction  DateTime  @default(now())
+  createdAt        DateTime  @default(now())
 
-  @@map("metrics")
+  @@index([clientPhone])
+  @@index([clientEmail])
+  @@index([clientBitrixId])
+  @@map("assignments")
 }
 
-model Pipeline {
-  id          String   @id @default(uuid())
-  stepName    String
-  stepOrder   Int
-  status      String
-  updatedAt   DateTime @updatedAt
+model KpiHistory {
+  id                    Int       @id @default(autoincrement())
+  employeeId            Int
+  employee              Employee  @relation(fields: [employeeId], references: [id])
+  period                DateTime  // дата snapshot'а (начало дня)
+  dealsWon              Int
+  dealsLost             Int
+  avgResponseMinutes    Float
+  kpiScore              Float
+  createdAt             DateTime  @default(now())
 
-  @@map("pipeline")
+  @@index([employeeId, period])
+  @@map("kpi_history")
 }
 
-model Escalation {
-  id          String   @id @default(uuid())
-  type        String   // sla_breach, complexity_high
-  description String?
-  status      String   // open, resolved
-  createdAt   DateTime @default(now())
+// Кэш лидов из Bitrix24 (синхронизируется ежечасно)
+model LeadCache {
+  bitrixId     String    @id
+  title        String
+  statusId     String
+  sourceId     String?
+  assignedById Int?
+  opportunity  Float     @default(0)
+  currencyId   String    @default("BYN")
+  clientName   String?
+  clientEmail  String?
+  clientPhone  String?
+  comments     String?
+  dateCreate   DateTime?
+  dateModify   DateTime?
+  dateClosed   DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
-  @@map("escalations")
+  @@map("leads_cache")
+}
+
+model Mailing {
+  id                Int       @id @default(autoincrement())
+  leadBitrixId      String?
+  clientEmail       String?
+  clientPhone       String?
+  clientName        String?
+  channel           String    // 'email' | 'telegram' | 'whatsapp'
+  subject           String?
+  messageText       String
+  generatedBy       String    @default("llm")  // 'llm' | 'template'
+  employeeId        Int?
+  employee          Employee? @relation(fields: [employeeId], references: [id])
+  status            String    @default("pending")  // pending | sent | failed
+  responseReceived  Boolean   @default(false)
+  sentAt            DateTime?
+  createdAt         DateTime  @default(now())
+
+  @@index([status])
+  @@index([clientEmail])
+  @@map("mailings")
+}
+
+// Входящие события от n8n (лог + дедупликация)
+model IncomingEvent {
+  id            Int      @id @default(autoincrement())
+  eventId       String   @unique  // идентификатор из Bitrix24
+  eventType     String            // ONOPENLINEMESSAGEADD, ONCRMLEADADD...
+  channel       String            // telegram | email | whatsapp
+  clientText    String
+  clientPhone   String?
+  clientEmail   String?
+  assignedTo    Int?
+  routingReason String?
+  topic         String?
+  urgency       String?
+  processedAt   DateTime @default(now())
+
+  @@map("incoming_events")
 }

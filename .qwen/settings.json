@@ -13,8 +13,32 @@
       "Bash(sleep *)",
       "Bash(curl *)",
       "Bash(pkill *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "WebFetch(supabase.com)",
+      "WebFetch(blog.patrickskinner.tech)",
+      "WebFetch(zazencodes.substack.com)",
+      "Bash(node *)",
+      "Read(//home/kurumi/.qwen/debug/**)",
+      "mcp__supabase__apply_migration",
+      "mcp__supabase__execute_sql",
+      "Bash(git remote *)"
     ]
+  },
+  "mcpServers": {
+    "supabase": {
+      "httpUrl": "https://mcp.supabase.com/mcp",
+      "timeout": 300000
+    },
+    "shadcn": {
+      "command": "/bin/bash",
+      "args": [
+        "-y",
+        "shadcn@latest",
+        "mcp"
+      ],
+      "cwd": "./apps/web",
+      "timeout": 300000
+    }
   },
   "$version": 3
 }

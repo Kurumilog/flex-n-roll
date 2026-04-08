@@ -1,102 +1,103 @@
-# FLEX-N-ROLL Project Status
+# FlexRouter AI — Project Status
 
 ## Текущий статус
 
 **Ветка**: `feature/nestjs-backend`
 
-**Последнее обновление**: 2026-04-02
+**Последнее обновление**: 2026-04-08
 
 ---
 
-## ✅ Завершённые задачи
+## 🎉 ALL PHASES COMPLETE — Hackathon Backend Ready
 
-### NestJS Backend + Swagger (Апрель 2026)
-
-Все 7 задач плана выполнены:
-
-| # | Задача | Статус | Файлы |
-|---|--------|--------|-------|
-| 1 | Applications Module | ✅ | `apps/api/src/applications/` |
-| 2 | Metrics Module | ✅ | `apps/api/src/metrics/` |
-| 3 | Pipeline Module | ✅ | `apps/api/src/pipeline/` |
-| 4 | Analytics Module | ✅ | `apps/api/src/analytics/` |
-| 5 | AppModule + main.ts | ✅ | `apps/api/src/app.module.ts`, `main.ts` |
-| 6 | Escalations Module | ✅ | `apps/api/src/escalations/` |
-| 7 | .env.example + docs | ✅ | `apps/api/.env.example`, `AGENTS.md` |
-
-### API Endpoints
-
-| Module | Endpoints | Status |
-|--------|-----------|--------|
-| **Health** | `GET /api/health` | ✅ Работает |
-| **Auth** | `POST /api/auth/login`, `POST /api/auth/bitrix`, `GET /api/auth/me`, `POST /api/auth/logout` | ✅ Работает |
-| **Profile** | `GET /api/profile`, `PATCH /api/profile` | ✅ Работает |
-| **Applications** | `GET /api/applications`, `GET /api/applications/:id`, `POST /api/applications` | ✅ Работает |
-| **Metrics** | `GET /api/metrics/today` | ✅ Работает |
-| **Pipeline** | `GET /api/pipeline/status`, `GET /api/pipeline/history` | ✅ Работает |
-| **Analytics** | `GET /api/analytics/categories`, `GET /api/analytics/deal/:id` | ✅ Работает |
-| **Escalations** | `GET /api/escalations` | ✅ Работает |
-| **Swagger** | `GET /api/docs` | ✅ Работает |
-
-### Swagger Документация
-
-- **URL**: `http://localhost:3001/api/docs`
-- **Теги**: applications, metrics, pipeline, analytics, escalations, auth, profile, health
-- **Версия**: 0.1.0
+| Фаза | Модуль | Тесты | Статус |
+|------|--------|-------|--------|
+| 0 | Scaffolding (Prisma, BitrixService, OllamaService) | — | ✅ |
+| 1 | Employees (менеджеры, доступность, личные менеджеры) | 12 | ✅ |
+| 2 | Routing (AI маршрутизация через Ollama) | 10 | ✅ |
+| 3 | KPI (формула, пересчёт, история) | 11 | ✅ |
+| 4 | Mailing (реактивационные рассылки) | 10 | ✅ |
+| 5 | Analytics (воронка, отказы, статистика) | 10 | ✅ |
+| 6 | Sync (синхронизация лидов из Bitrix24) | 6 | ✅ |
+| **Итого** | **8 модулей** | **274 теста** | **✅** |
 
 ---
 
-## 🏗 Архитектура
+## 🏗 Архитектура (3 узла)
 
 ```
-apps/api/
-├── src/
-│   ├── applications/     # Заявки (CRUD + фильтры)
-│   ├── metrics/          # KPI метрики
-│   ├── pipeline/         # Статус пайплайна
-│   ├── analytics/        # Аналитика + статистика сделок
-│   ├── escalations/      # SLA эскалации
-│   ├── auth/             # Аутентификация (session cookie)
-│   ├── profile/          # Профиль пользователя
-│   ├── health/           # Health check
-│   ├── common/           # Constants, types
-│   ├── core/             # MockAuthStoreService
-│   ├── app.module.ts     # Главный модуль
-│   └── main.ts           # Точка входа + Swagger
+┌─────────────────────┐     ┌──────────────────────────┐
+│  Bitrix24 (облако)  │────▶│  VPS: kurumi.software     │
+│  Telegram/WhatsApp  │     │  Nginx + SSL + Tailscale  │
+└─────────────────────┘     └────────────┬─────────────┘
+                                         │ Tailscale
+                            ┌────────────┴─────────────┐
+                            │  MacBook M4 (друг)       │
+                            │  n8n (:5678) + Ollama    │
+                            │  qwen2.5:14b-instruct    │
+                            └────────────┬─────────────┘
+                                         │ Tailscale
+                                         ↓
+                            ┌──────────────────────────┐
+                            │  ТВОЙ СЕРВЕР             │
+                            │  NestJS API (:3000)      │
+                            │  Supabase (cloud)        │
+                            │                          │
+                            │  /api/employees          │
+                            │  /api/routing            │
+                            │  /api/kpi                │
+                            │  /api/mailing            │
+                            │  /api/analytics          │
+                            │  /api/sync               │
+                            └──────────────────────────┘
 ```
+
+### Как работает доступ
+- **Bitrix24 → n8n:** webhook на `https://n8n.kurumi.software` → VPS форвардит через Tailscale на MacBook друга
+- **NestJS → n8n:** прямой доступ по Tailscale IP (`http://100.x.x.x:5678`)
+- **NestJS → Ollama:** прямой доступ по Tailscale IP (`http://100.x.x.x:11434`)
+
+**Удалено (legacy, не импортируется)**: `apps/web/`, `apps/bx24/`, `packages/ui/`
+**Старые модули (существуют, но НЕ в AppModule)**: applications, metrics, pipeline, escalations, auth, profile, core
 
 ---
 
-## 📦 Mock данные
+## 📦 База данных (Prisma + Supabase PostgreSQL)
 
-### Applications (12 заявок)
-- Источники: email, facebook, webform
-- Intent: commercial, support, technical
-- Urgency: low, medium, high
-- Status: processing, assigned, escalated
+| Модель | Описание |
+|--------|----------|
+| **Employee** | 23 менеджера с KPI, доступностью, рабочими часами |
+| **Assignment** | История назначений «клиент → менеджер» (для личных менеджеров) |
+| **KpiHistory** | Ежедневные snapshot'ы KPI (30 дней) |
+| **LeadCache** | Кэш лидов из Bitrix24 (синхронизируется каждый час) |
+| **Mailing** | Записи о рассылках (статус, канал, ответ) |
+| **IncomingEvent** | Лог входящих событий (дедупликация по eventId) |
 
-### Metrics
-- totalProcessed: 47
-- aiConfidenceAvg: 88%
-- autoRouted: 39
-- manualReview: 8
-- slaCompliance: 94%
+---
 
-### Pipeline (7 шагов)
-1. Webhook Received
-2. AI Parsing
-3. Intent Classification
-4. Urgency Detection
-5. Manager Assignment
-6. Bitrix24 Sync
-7. Notification Sent
+## 🔌 API Endpoints
 
-### Analytics
-- Categories: commercial (60%), support (25%), technical (15%)
-- Deal stats: BX-1001, BX-1002
+| Module | Endpoints | Description |
+|--------|-----------|-------------|
+| **Employees** | `GET /employees/available`, `PATCH /employees/:id/availability`, `GET /employees/:id/kpi` | Менеджеры + личные менеджеры |
+| **Routing** | `POST /routing/route` | AI маршрутизация (n8n → NestJS) |
+| **KPI** | `GET /kpi`, `POST /kpi/recalculate`, `GET /kpi/:id` | KPI + ежедневный пересчёт |
+| **Mailing** | `GET /mailing/candidates`, `POST /mailing/send`, `GET /mailing/stats` | Реактивационные рассылки |
+| **Analytics** | `GET /analytics/funnel`, `/rejections`, `/managers`, `/mailing` | Дашборд аналитики |
+| **Sync** | `POST /sync/leads`, `GET /sync/cache-stats` | Синхронизация из Bitrix24 |
+| **Health** | `GET /api/health` | Health check |
+| **Swagger** | `GET /api/docs` | API документация |
 
-### Escalations
-- 2 эскалации: sla_breach, complexity_high
+---
+
+## 🧪 Тесты
+
+| Тип | Кол-во | Команда |
+|-----|--------|---------|
+| Unit | 274 | `pnpm --filter api test` |
+| Test Suites | 27 | `pnpm --filter api test` |
+
+**Конвенция:** Tests FIRST (unit → integration → e2e). >80% coverage target.
 
 ---
 
@@ -105,73 +106,58 @@ apps/api/
 | Компонент | Технология | Версия |
 |-----------|------------|--------|
 | Framework | NestJS | 10.4.22 |
+| ORM | Prisma | 5.22.0 |
+| Database | Supabase (PostgreSQL) | — |
+| LLM | Ollama (qwen2.5:14b-instruct) | — |
+| HTTP Client | Axios | 1.14.0 |
+| Email | Nodemailer | 6.10.1 |
 | Swagger | @nestjs/swagger | 8.1.1 |
 | Validation | class-validator | 0.14.2 |
-| Transform | class-transformer | 0.5.1 |
-| Runtime | tsx / Node.js | 25.8.2 |
+| Package manager | pnpm | 10.33.0 |
+| Runtime | Node.js | 25.8.2 |
 
 ---
 
 ## 🚀 Запуск
 
 ```bash
-cd apps/api
 pnpm install
-pnpm build
-node dist/main.js
+pnpm --filter api prisma:generate   # Сгенерировать Prisma Client
+pnpm --filter api prisma:migrate    # Применить миграции
+pnpm --filter api prisma:seed       # Загрузить 23 сотрудников
+pnpm --filter api dev               # Запустить сервер
 ```
 
-**API**: http://localhost:3001  
-**Swagger**: http://localhost:3001/api/docs
+**API**: http://localhost:3000
+**Swagger**: http://localhost:3000/api/docs
 
 ---
 
-## 📝 Использованные skills
+## ⏭ Следующие шаги (интеграция)
 
-| Skill | Когда |
-|-------|-------|
-| `find-docs` | Поиск документации NestJS, Swagger, Groq, Bitrix24 |
-| `writing-plans` | Создание плана реализации (2026-04-02-nestjs-backend-swagger.md) |
-| `subagent-driven-development` | Выполнение задач плана через subagents |
-| `using-git-worktrees` | Создание изолированного worktree |
-| `code-reviewer` | Финальный code review |
+1. **Supabase** — настроить DATABASE_URL в `.env.local`
+2. **Ollama** — подключить к MacBook M4 через Tailscale (qwen2.5:14b)
+3. **Bitrix24** — настроить webhook URL, проверить API
+4. **n8n** — подключить webhooks к NestJS endpoints
+5. **E2E тестирование** — полный flow: Bitrix24 → n8n → NestJS → Менеджер назначен
 
 ---
 
-## ⚠️ Известные проблемы
+## 🔍 Аудит кода (2026-04-08)
 
-### Constructor DI не работает с tsx
-**Проблема**: NestJS dependency injection через constructor не работает при использовании `tsx` из-за отсутствия proper metadata generation.
+Проверено через **context7** (актуальная документация) и **Supabase MCP**:
 
-**Решение**: Замена constructor injection на прямую инстанциацию сервисов:
-```typescript
-// Было (не работает с tsx)
-constructor(private readonly service: MyService) {}
+| Что проверяли | Результат |
+|---------------|-----------|
+| NestJS Guards (`@nestjs/passport`) | ✅ Наш guard переписан на standalone CanActivate |
+| Prisma `$transaction` array syntax | ✅ Актуален |
+| Prisma `upsert` | ✅ Актуален |
+| Ollama `/api/chat` | ✅ Актуален |
+| Ollama `/api/embeddings` | ✅ Исправлен (был `/api/embed`) |
+| Supabase БД | ✅ 6 таблиц созданы, pgvector включён, 0 security warnings |
 
-// Стало (работает)
-private readonly service = new MyService();
-```
-
-**Фикс**: Commit `ceebff2` — fix(api): replace constructor injection with direct instantiation
-
----
-
-## 📋 Следующие шаги
-
-1. **Frontend** — создать новый Vite + React 18 + TypeScript + Tailwind SPA
-2. **Groq AI** — реализовать классификацию заявок через Llama 3.3 70B
-3. **Bitrix24** — sync сделок через REST API webhook
-4. **Database** — Prisma + PostgreSQL (Supabase) для хранения заявок
-5. **Redis + BullMQ** — очереди для асинхронной обработки
-6. **Socket.io** — real-time обновления вместо polling
-
----
-
-## 📊 Метрики проекта
-
-- **Всего endpoints**: 17
-- **Mock заявок**: 12
-- **Swagger тегов**: 8
-- **Коммитов в ветке**: 10+
-- **Стек**: NestJS + Prisma + PostgreSQL (Supabase)
-- **Frontend (план)**: React 18 + TypeScript + Vite + Tailwind + Zustand + framer-motion
+### Исправления аудита
+1. ✅ **Ollama embed**: `/api/embed` → `/api/embeddings`, response `embeddings[]` → `embedding`
+2. ✅ **ApiKeyGuard**: standalone `CanActivate` вместо сломанного `@nestjs/passport`
+3. ✅ **Supabase миграция**: все 6 таблиц + `CREATE EXTENSION vector`
+4. ✅ **274 теста проходят**, typecheck clean

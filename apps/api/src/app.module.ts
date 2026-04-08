@@ -1,15 +1,17 @@
-import { Module } from "@nestjs/common";
-import { ConfigModule } from "@nestjs/config";
+import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 
-import { validate } from "./config/app.validation";
-import { AnalyticsModule } from "./analytics/analytics.module";
-import { ApplicationsModule } from "./applications/applications.module";
-import { AuthModule } from "./auth/auth.module";
-import { EscalationsModule } from "./escalations/escalations.module";
-import { HealthModule } from "./health/health.module";
-import { MetricsModule } from "./metrics/metrics.module";
-import { PipelineModule } from "./pipeline/pipeline.module";
-import { ProfileModule } from "./profile/profile.module";
+import { validate } from './config/app.validation';
+import { PrismaModule } from './prisma/prisma.module';
+import { HealthModule } from './health/health.module';
+import { BitrixModule } from './modules/bitrix/bitrix.module';
+import { OllamaModule } from './modules/ollama/ollama.module';
+import { EmployeesModule } from './modules/employees/employees.module';
+import { RoutingModule } from './modules/routing/routing.module';
+import { KpiModule } from './modules/kpi/kpi.module';
+import { MailingModule } from './modules/mailing/mailing.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { SyncModule } from './modules/sync/sync.module';
 
 @Module({
   imports: [
@@ -18,14 +20,16 @@ import { ProfileModule } from "./profile/profile.module";
       envFilePath: ['.env.local', '.env'],
       validate,
     }),
-    AuthModule,
-    ProfileModule,
+    PrismaModule,
     HealthModule,
-    ApplicationsModule,
-    MetricsModule,
-    PipelineModule,
+    BitrixModule,
+    OllamaModule,
+    EmployeesModule,
+    RoutingModule,
+    KpiModule,
+    MailingModule,
     AnalyticsModule,
-    EscalationsModule,
+    SyncModule,
   ],
 })
 export class AppModule {}
