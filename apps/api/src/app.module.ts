@@ -13,6 +13,7 @@ import { MailingModule } from './modules/mailing/mailing.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { N8nModule } from './modules/n8n/n8n.module';
+import { TestService, TestDiController } from './test-di.controller';
 
 @Module({
   imports: [
@@ -33,5 +34,7 @@ import { N8nModule } from './modules/n8n/n8n.module';
     SyncModule,
     N8nModule,
   ],
+  providers: [TestService],
+  controllers: [TestDiController],
 })
 export class AppModule {}

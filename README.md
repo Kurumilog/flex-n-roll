@@ -2,7 +2,7 @@
 
 > AI-powered lead routing system for Flex-N-Roll PRO — a B2B label manufacturing company (Minsk + Moscow).
 
-[![Tests](https://img.shields.io/badge/tests-282%20passed-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-344%20passed-brightgreen)]()
 [![NestJS](https://img.shields.io/badge/NestJS-10.4-e01563)]()
 [![Prisma](https://img.shields.io/badge/Prisma-5.22-2d3748)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6)]()
@@ -92,8 +92,8 @@ pnpm prisma:seed
 pnpm dev
 ```
 
-API: http://localhost:3000
-Swagger docs: http://localhost:3000/api/docs
+API: http://localhost:3001
+Swagger docs: http://localhost:3001/api/docs (disabled — circular deps in legacy DTOs)
 
 ### 2. Configure Environment
 
@@ -121,7 +121,7 @@ cp apps/api/.env.example apps/api/.env.local
 
 ```bash
 cd apps/api
-pnpm test          # 274 unit tests
+pnpm test          # 344 unit tests
 pnpm test:cov      # with coverage
 ```
 
@@ -181,8 +181,8 @@ pnpm test:cov      # with coverage
 
 | Type | Count | Command |
 |------|-------|---------|
-| Unit | 282 | `pnpm --filter api test` |
-| Test Suites | 27 | `pnpm --filter api test` |
+| Unit | 344 | `cd apps/api && pnpm test` |
+| Test Suites | 27 | `cd apps/api && pnpm test` |
 
 **Convention:** Tests FIRST (unit → integration → e2e), >80% coverage target.
 

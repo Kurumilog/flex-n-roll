@@ -6,6 +6,34 @@
 
 ---
 
+## Latest Update — 2026-04-09 21:00: NestJS DI Issue Fixed
+
+### Проблема
+PrismaService не инжектится в сервисы через NestJS DI — все сервисы получали `undefined`.
+
+### Root Cause
+1. `tsx watch` конфликтовал с NestJS decorator metadata при CommonJS moduleResolution
+2. Множественные экземпляры PrismaClient конфликтовали с Supabase pooling (prepared statement already exists)
+
+### Решение
+| File | Change |
+|------|--------|
+| `apps/api/package.json` | Dev скрипт: `tsx watch src/main.ts` → `nest start --watch` |
+| `apps/api/nest-cli.json` | **НОВЫЙ** — NestJS CLI конфигурация |
+| `apps/api/src/prisma/prisma.service.ts` | Глобальный PrismaClient singleton для избежания конфликтов |
+| `apps/api/src/main.ts` | Graceful shutdown handlers, improved error handling |
+
+### Результат
+- ✅ Server запускается на порту 3001
+- ✅ Health endpoint: `{"status":"ok"}`
+- ✅ Employees: 23 сотрудника из базы
+- ✅ Routing: `managerId: 13 (Марина)`, fallback при недоступном Ollama
+- ✅ 344 теста проходят
+
+---
+
+---
+
 ## Overview
 
 This branch implements comprehensive API quality improvements for the NestJS backend, addressing all critical and medium severity issues from the initial audit. The work spans 5 major areas: Swagger documentation enhancement, UUID validation, unit testing infrastructure, E2E testing, and comprehensive documentation.

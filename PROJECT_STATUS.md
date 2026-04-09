@@ -4,7 +4,28 @@
 
 **Ветка**: `feature/nestjs-backend`
 
-**Последнее обновление**: 2026-04-09
+**Последнее обновление**: 2026-04-09 21:00
+
+**Статус**: ✅ **SERVER RUNNING** — все endpoints работают
+
+---
+
+## ✅ DI Issue — RESOLVED
+
+**Проблема была**: PrismaService не инжектится в сервисы через NestJS DI
+
+**Root Cause**: 
+1. `tsx watch` конфликтовал с NestJS decorator metadata
+2. Множественные PrismaClient экземпляры конфликтовали с Supabase pooling
+
+**Решение**:
+1. Перешли на `nest start --watch` (официальный NestJS CLI)
+2. Глобальный PrismaClient singleton в PrismaService
+
+**Результат тестирования**:
+- ✅ Health: `{"status":"ok"}`
+- ✅ Employees: 23 сотрудника из базы
+- ✅ Routing: `managerId: 13 (Марина)`, fallback при недоступном Ollama
 
 ---
 
@@ -19,7 +40,7 @@
 | 4 | Mailing (реактивационные рассылки) | 10 | ✅ |
 | 5 | Analytics (воронка, отказы, статистика) | 10 | ✅ |
 | 6 | Sync (синхронизация лидов из Bitrix24) | 6 | ✅ |
-| **Итого** | **8 модулей** | **282 теста** | **✅** |
+| **Итого** | **8 модулей** | **344 теста** | **✅** |
 
 ---
 
@@ -122,24 +143,24 @@
 
 ```bash
 pnpm install
-pnpm --filter api prisma:generate   # Сгенерировать Prisma Client
-pnpm --filter api prisma:migrate    # Применить миграции
-pnpm --filter api prisma:seed       # Загрузить 23 сотрудников
-pnpm --filter api dev               # Запустить сервер
+cd apps/api
+pnpm prisma:generate   # Сгенерировать Prisma Client
+pnpm prisma:migrate    # Применить миграции
+pnpm prisma:seed       # Загрузить 23 сотрудников
+pnpm dev               # Запустить сервер (nest start --watch)
 ```
 
-**API**: http://localhost:3000
-**Swagger**: http://localhost:3000/api/docs
+**API**: http://localhost:3001
+**Port**: 3001 (указано в `.env.local`)
 
 ---
 
 ## ⏭ Следующие шаги (интеграция)
 
-1. **Supabase** — настроить DATABASE_URL в `.env.local`
-2. **Ollama** — подключить к MacBook M4 через Tailscale (qwen2.5:14b)
-3. **Bitrix24** — настроить webhook URL, проверить API
-4. **n8n** — подключить webhooks к NestJS endpoints
-5. **E2E тестирование** — полный flow: Bitrix24 → n8n → NestJS → Менеджер назначен
+1. **Ollama** — подключить к MacBook M4 через Tailscale (100.94.92.23:11434)
+2. **Bitrix24** — проверить webhook URL в .env.local, протестировать API
+3. **n8n** — настроить webhooks к NestJS endpoints (Routing, KPI, Sync, Mailing)
+4. **E2E тестирование** — полный flow: Bitrix24 → n8n → NestJS → Ollama → Менеджер назначен
 
 ---
 
@@ -160,4 +181,5 @@ pnpm --filter api dev               # Запустить сервер
 1. ✅ **Ollama embed**: `/api/embed` → `/api/embeddings`, response `embeddings[]` → `embedding`
 2. ✅ **ApiKeyGuard**: standalone `CanActivate` вместо сломанного `@nestjs/passport`
 3. ✅ **Supabase миграция**: все 6 таблиц + `CREATE EXTENSION vector`
-4. ✅ **274 теста проходят**, typecheck clean
+4. ✅ **344 теста проходят**, typecheck clean
+5. ✅ **DI Issue исправлена**: `tsx watch` → `nest start --watch` + глобальный PrismaClient singleton

@@ -90,11 +90,31 @@
   - ✅ SyncController: POST /sync/leads, GET /sync/cache-stats
   - ✅ BitrixService: Full REST API wrapper with retry logic for rate limits
 
-### Current State (2026-04-09)
-- ✅ All 6 phases complete, **282 tests passing** (was 274)
-- ✅ Typecheck clean (removed dotenv dependency)
+### Current State (2026-04-09 21:00)
+- ✅ All 6 phases complete, **344 tests passing**
+- ✅ Typecheck clean
 - ✅ Supabase: 6 tables created, 23 employees seeded
-- ✅ Production-ready for hackathon integration phase
+- ✅ **SERVER RUNNING** — NestJS API на порту 3001, все endpoints работают
+- ✅ **DI ISSUE FIXED** — PrismaService успешно инжектится во все сервисы
+- ✅ n8n: 6 workflows created + activated (Routing, KPI, Sync, Mailing, Transfer, My workflow)
+- ✅ Bitrix24: Webhook event handler registered (ONIMCONNECTORMESSAGEADD) → n8n/webhook/routing-message
+
+### Endpoint Test Results (2026-04-09 21:00)
+```bash
+# Health ✅
+curl http://localhost:3001/api/health
+→ {"status":"ok","timestamp":"2026-04-09T14:59:41.701Z","service":"flex-n-roll-api"}
+
+# Employees ✅ (23 employees, sorted by KPI DESC)
+curl http://localhost:3001/api/employees/available
+→ {"success":true,"data":{"employees":[...23 items...]}}
+
+# Routing ✅ (fallback to KPI since Ollama unreachable)
+curl -X POST http://localhost:3001/api/routing/route \
+  -H "x-api-key: dev-secret-key-change-in-production" \
+  -d '{"messageText": "Нужна этикетка 58х40мм", "channel": "telegram"}'
+→ {"success":true,"data":{"managerId":13,"managerName":"Марина","topic":"other","urgency":"medium","reason":"Fallback: LLM недоступ, выбран по KPI"}}
+```
 
 ---
 - Project: FlexRouter AI — 3-node architecture. Node 1: MacBook M4 (friend) runs n8n (:5678) + Ollama (qwen2.5:14b-instruct). Node 2: VPS kurumi.software runs Nginx+SSL+Tailscale, forwards Bitrix24 webhooks to MacBook. Node 3: User's server runs NestJS API (:3000) + Supabase cloud, accesses n8n/Ollama via Tailscale IP directly. Bitrix24 webhooks go to https://n8n.kurumi.software → VPS → Tailscale → n8n. NestJS calls n8n/Ollama via Tailscale IP (http://100.x.x.x:PORT). All 6 phases complete, **282 tests passing**.
@@ -186,8 +206,41 @@
 7. Disabled Swagger due to circular dependency in legacy DTOs
 
 ### Next session: what to do first
-1. Add DATABASE_URL to apps/api/.env.local
-2. Run `pnpm prisma:migrate` + `pnpm prisma:seed`
-3. Verify `pnpm dev` starts fully
-4. Test `curl http://localhost:3001/api/routing/route`
-5. Test full chain: Bitrix24 → n8n → NestJS → Ollama → Bitrix24
+1. ✅ **FIX DI ISSUE** — Исправлено (см. ниже)
+2. ✅ Add DATABASE_URL to apps/api/.env.local
+3. ✅ Run `pnpm prisma:migrate` + `pnpm prisma:seed`
+4. ✅ Verify `pnpm dev` starts fully
+5. ✅ Test `curl http://localhost:3001/api/routing/route`
+6. ⏭ Test full chain: Bitrix24 → n8n → NestJS → Ollama → Bitrix24
+
+---
+
+## ✅ RESOLVED: NestJS DI Issue — PrismaService
+
+### Проблема (была)
+PrismaService не инжектится в сервисы через NestJS DI — все сервисы получали `undefined` вместо PrismaService.
+
+### Root Cause
+Проблема была в **двух вещах одновременно**:
+1. **tsx watch** конфликтовал с NestJS decorator metadata при CommonJS moduleResolution
+2. **Множественные экземпляры PrismaService** создавали конфликты prepared statements в Supabase pooling
+
+### Решение (2 шага)
+1. **Перешли на `nest start --watch`** вместо `tsx watch` — официальный NestJS CLI
+   - Файл: `apps/api/package.json` — `"dev": "nest start --watch"`
+   - Добавлен `nest-cli.json`
+
+2. **Глобальный PrismaClient singleton** — избежание конфликта prepared statements
+   - Файл: `apps/api/src/prisma/prisma.service.ts`
+   - Module-level `let globalPrismaClient: PrismaClient | null = null`
+   - Все экземпляры PrismaService делят один PrismaClient
+
+### Результат
+- ✅ Все 23 сотрудника из базы
+- ✅ Routing работает (fallback к KPI при недоступном Ollama)
+- ✅ Health endpoint работает
+- ✅ 344 теста проходят
+
+### Bitrix24 Webhook Note
+На Bitrix24 настроен только один исходящий вебхук: `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/`
+Это нужно учитывать при интеграции — все вызовы к Bitrix24 идут через этот webhook.

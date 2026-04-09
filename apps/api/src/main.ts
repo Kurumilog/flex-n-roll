@@ -72,10 +72,29 @@ async function bootstrap() {
   // });
 
   const port = configService.get<number>('PORT') || 3000;
-  await app.listen(port, '0.0.0.0');
-
-  Logger.log(`🚀 API running on http://localhost:${port}`, "Bootstrap");
-  Logger.log(`📚 Swagger docs: http://localhost:${port}/api/docs`, "Bootstrap");
+  Logger.log(`Starting server on port ${port}...`, "Bootstrap");
+  
+  // Handle shutdown gracefully
+  const shutdownSignal = async () => {
+    Logger.log('Shutting down...', 'Bootstrap');
+    await app.close();
+    process.exit(0);
+  };
+  process.on('SIGTERM', shutdownSignal);
+  process.on('SIGINT', shutdownSignal);
+  
+  try {
+    await app.listen(port, '0.0.0.0');
+    Logger.log(`🚀 API running on http://localhost:${port}`, "Bootstrap");
+    Logger.log(`📚 Swagger docs: http://localhost:${port}/api/docs`, "Bootstrap");
+    Logger.log(`✅ Server PID: ${process.pid}`, "Bootstrap");
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    const stack = err instanceof Error ? err.stack : 'No stack';
+    Logger.error(`Failed to start server: ${message}`, "Bootstrap");
+    Logger.error(stack, "Bootstrap");
+    process.exit(1);
+  }
 }
 
 void bootstrap();

@@ -8,6 +8,28 @@
       "type": "stdio",
       "command": "npx",
       "args": ["-y", "shadcn@latest", "mcp"]
+    },
+    "supabase-mcp-server": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase@latest",
+        "--access-token",
+        "sbp_e151d8a89eefe0650206d048e41e7c79c016bfe3"
+      ],
+      "env": {}
+    },
+    "n8n-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "mcp-remote",
+        "https://n8n.kurumi.software/mcp/cfd90fc7-90c4-4c2b-8086-436443cdd71e",
+        "--header",
+        "Authorization: Bearer 123456789"
+      ]
     }
   },
   "inputs": []
