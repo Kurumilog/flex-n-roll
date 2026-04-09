@@ -3,6 +3,17 @@ import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 
 /**
+ * API ключи которые НЕ требуют проверки (публичные endpoints)
+ */
+const PUBLIC_PATHS = [
+  '/api/health',
+  '/api/docs',
+  '/api/docs-json',
+  '/favicon.ico',
+  '/',
+];
+
+/**
  * ApiKeyGuard — защита эндпоинтов через x-api-key заголовок
  *
  * Не использует @nestjs/passport — всё в одном файле.
@@ -13,6 +24,12 @@ export class ApiKeyGuard implements CanActivate {
 
   canActivate(context: ExecutionContext): boolean {
     const request = context.switchToHttp().getRequest<Request>();
+
+    // Публичные endpoints не требуют API key
+    if (PUBLIC_PATHS.some(path => request.path.startsWith(path))) {
+      return true;
+    }
+
     const apiKey = request.headers['x-api-key'] as string | undefined;
     const expectedKey = this.configService.get<string>('API_SECRET_KEY');
 

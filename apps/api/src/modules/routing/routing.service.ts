@@ -2,9 +2,11 @@ import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EmployeesService } from '../employees/employees.service';
 import { OllamaService, OllamaUnavailableException } from '../ollama/ollama.service';
+import { BitrixService } from '../bitrix/bitrix.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RouteMessageDto } from './dto/route-message.dto';
 import { RoutingResultDto, Topic, Urgency } from './dto/routing-result.dto';
+import { TransferSessionDto, TransferResultDto } from './dto/transfer-session.dto';
 
 interface ParsedLlmResponse {
   manager_id: number;
@@ -20,6 +22,7 @@ export class RoutingService {
   constructor(
     private readonly employeesService: EmployeesService,
     private readonly ollamaService: OllamaService,
+    private readonly bitrixService: BitrixService,
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
   ) {}
@@ -322,5 +325,80 @@ USER: Клиент написал: "${messageText}"`;
         urgency: parsed.urgency,
       },
     });
+  }
+
+  /**
+   * Передача диалога другому менеджеру
+   * Вызывается когда текущий менеджер недоступен или рабочий день окончен
+   */
+  async transferSession(dto: TransferSessionDto): Promise<TransferResultDto> {
+    this.logger.log(
+      `Transferring session ${dto.sessionId} from manager ${dto.currentManagerId} (reason: ${dto.reason})`,
+    );
+
+    // 1. Найти доступных менеджеров (исключая текущего)
+    const availableEmployees =
+      await this.employeesService.getAvailableEmployees();
+
+    const candidates = availableEmployees.filter(
+      (e) => e.id !== dto.currentManagerId,
+    );
+
+    if (candidates.length === 0) {
+      this.logger.warn(
+        'No available managers to transfer to — session stays with current manager',
+      );
+      return {
+        newManagerId: dto.currentManagerId,
+        newManagerName: 'No available managers',
+        sessionId: dto.sessionId,
+        reason: dto.reason,
+        transferred: false,
+      };
+    }
+
+    // 2. Выбрать менеджера с наивысшим KPI
+    const newManager = candidates[0]; // Уже отсортированы по KPI DESC
+
+    this.logger.log(
+      `Transferring to: ${newManager.name} ${newManager.lastName} (ID: ${newManager.id}, KPI: ${newManager.kpiScore})`,
+    );
+
+    // 3. Передать сессию через Bitrix24 API
+    try {
+      await this.bitrixService.transferSession(dto.sessionId, newManager.id);
+      this.logger.log(
+        `Session ${dto.sessionId} transferred to manager ${newManager.id}`,
+      );
+    } catch (error) {
+      this.logger.error(
+        `Failed to transfer session ${dto.sessionId}: ${error instanceof Error ? error.message : error}`,
+      );
+      // Не бросаем исключение — возвращаем результат с transferred: false
+      return {
+        newManagerId: newManager.id,
+        newManagerName: `${newManager.name} ${newManager.lastName}`,
+        sessionId: dto.sessionId,
+        reason: dto.reason,
+        transferred: false,
+      };
+    }
+
+    // 4. Записать в историю назначений
+    await this.prisma.assignment.create({
+      data: {
+        employeeId: newManager.id,
+        interactionCount: 1,
+        lastInteraction: new Date(),
+      },
+    });
+
+    return {
+      newManagerId: newManager.id,
+      newManagerName: `${newManager.name} ${newManager.lastName}`,
+      sessionId: dto.sessionId,
+      reason: dto.reason,
+      transferred: true,
+    };
   }
 }

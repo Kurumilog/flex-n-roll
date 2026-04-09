@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OllamaService, OllamaUnavailableException } from '../ollama/ollama.service';
+import { EXCLUDED_FROM_MAILING_STATUSES } from '../../common/constants/bitrix-statuses';
+import * as nodemailer from 'nodemailer';
 
 export interface MailingCandidate {
   leadId: string;
@@ -20,17 +23,27 @@ export interface MailingStats {
   responseRate: number;
 }
 
-// Терминальные статусы отказа (исключаются из рассылки)
-const TERMINAL_FAILURE_STATUSES = ['CONVERTED', 'JUNK', '15', '20'];
-
 @Injectable()
 export class MailingService {
   private readonly logger = new Logger(MailingService.name);
+  private readonly transporter: nodemailer.Transporter;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly ollamaService: OllamaService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    // Инициализация nodemailer транспортера
+    this.transporter = nodemailer.createTransport({
+      host: this.configService.get<string>('SMTP_HOST', 'smtp.gmail.com'),
+      port: this.configService.get<number>('SMTP_PORT', 587),
+      secure: false, // true для 465, false для 587
+      auth: {
+        user: this.configService.get<string>('SMTP_USER'),
+        pass: this.configService.get<string>('SMTP_PASS'),
+      },
+    });
+  }
 
   /**
    * Получить лиды для реактивационной рассылки
@@ -42,7 +55,7 @@ export class MailingService {
     const leads = await this.prisma.leadCache.findMany({
       where: {
         statusId: {
-          notIn: TERMINAL_FAILURE_STATUSES,
+          notIn: EXCLUDED_FROM_MAILING_STATUSES,
         },
         dateModify: {
           lt: cutoffDate,
@@ -125,7 +138,44 @@ USER:
       body = this.getDefaultTemplate(candidate);
     }
 
-    // Записать в БД
+    // Отправка email через SMTP
+    if (channel === 'email' && candidate.clientEmail) {
+      try {
+        await this.transporter.sendMail({
+          from: this.configService.get<string>('SMTP_FROM', 'FlexRouter <noreply@kurumi.software>'),
+          to: candidate.clientEmail,
+          subject,
+          html: body.replace(/\n/g, '<br>'), // Простая конвертация в HTML
+        });
+        this.logger.log(`Email sent to ${candidate.clientEmail}`);
+      } catch (smtpError) {
+        this.logger.error(
+          `SMTP failed for ${candidate.clientEmail}: ${smtpError instanceof Error ? smtpError.message : smtpError}`,
+        );
+        // Записать как failed и продолжить
+        return this.logMailing(candidate, channel, subject, body, generatedBy, 'failed');
+      }
+    } else if (channel !== 'email') {
+      this.logger.log(
+        `Channel ${channel} selected — email not sent (requires Bitrix24 API)`,
+      );
+    }
+
+    // Записать в БД как отправленное
+    return this.logMailing(candidate, channel, subject, body, generatedBy, 'sent');
+  }
+
+  /**
+   * Записать результат рассылки в БД
+   */
+  private async logMailing(
+    candidate: MailingCandidate,
+    channel: string,
+    subject: string,
+    body: string,
+    generatedBy: string,
+    status: 'sent' | 'failed',
+  ): Promise<{ status: string; id?: number }> {
     try {
       const mailing = await this.prisma.mailing.create({
         data: {
@@ -136,40 +186,18 @@ USER:
           subject,
           messageText: body,
           generatedBy,
-          status: 'sent',
-          sentAt: new Date(),
+          status,
+          sentAt: status === 'sent' ? new Date() : undefined,
         },
       });
 
       this.logger.log(
-        `Mailing sent to ${candidate.clientEmail} (lead ${candidate.leadId})`,
+        `Mailing ${status} for ${candidate.clientEmail} (lead ${candidate.leadId})`,
       );
 
-      return { status: 'sent', id: mailing.id };
-    } catch (error) {
-      this.logger.error(
-        `Failed to send mailing to ${candidate.clientEmail}`,
-        error,
-      );
-
-      // Попытаться записать как failed
-      try {
-        await this.prisma.mailing.create({
-          data: {
-            leadBitrixId: candidate.leadId,
-            clientEmail: candidate.clientEmail,
-            clientName: candidate.clientName,
-            channel,
-            subject,
-            messageText: body,
-            generatedBy,
-            status: 'failed',
-          },
-        });
-      } catch (dbError) {
-        this.logger.error('Failed to log mailing to database', dbError);
-      }
-
+      return { status, id: mailing.id };
+    } catch (dbError) {
+      this.logger.error('Failed to log mailing to database', dbError);
       return { status: 'failed' };
     }
   }

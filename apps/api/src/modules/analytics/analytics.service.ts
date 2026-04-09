@@ -1,27 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-
-// Статусы отказа для аналитики
-const TERMINAL_FAILURE_STATUSES = ['JUNK', '15', '16', '17', '18', '19', '20', '22'];
-const DEAL_FAILURE_STATUSES = ['LOSE', 'APOLOGY', '6', '7', '8', '9'];
-
-// Маппинг статусов на причины отказа
-const REJECTION_REASON_MAP: Record<string, string> = {
-  JUNK: 'Не используют этикетку',
-  '15': 'Работают с посредником',
-  '16': 'Не прошли по ценам',
-  '17': 'Не прошли по ТЗ',
-  '18': 'Не прошли по срокам изготовления',
-  '19': 'Не прошли по логистике',
-  '20': 'Банкроты / ненадёжные',
-  '22': 'Другое',
-  LOSE: 'Технологическое ограничение',
-  APOLOGY: 'Не прошли по цене',
-  '6': 'Не прошли по срокам производства',
-  '7': 'Не прошли по срокам доставки',
-  '8': 'Не прошли тестирование',
-  '9': 'Другое (сделка)',
-};
+import {
+  TERMINAL_FAILURE_STATUSES,
+  REJECTION_REASON_MAP,
+  LEAD_STATUS_NAMES,
+} from '../../common/constants/bitrix-statuses';
 
 export interface FunnelStatus {
   statusId: string;
@@ -77,7 +60,7 @@ export class AnalyticsService {
 
     const byStatus: FunnelStatus[] = grouped.map((g) => ({
       statusId: g.statusId,
-      name: g.statusId, // TODO: Маппинг на читаемые названия из pipeline.json
+      name: LEAD_STATUS_NAMES[g.statusId] ?? g.statusId,
       count: g._count.statusId,
       percentage: total > 0 ? Math.round((g._count.statusId / total) * 1000) / 10 : 0,
     }));

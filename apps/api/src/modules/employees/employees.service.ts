@@ -43,6 +43,7 @@ export class EmployeesService {
 
   /**
    * Получить список доступных менеджеров, отсортированных по KPI (по убыванию)
+   * Фильтрует по isAvailable И по рабочему времени (workStart-workEnd)
    */
   async getAvailableEmployees(): Promise<AvailableEmployee[]> {
     const employees = await this.prisma.employee.findMany({
@@ -56,21 +57,34 @@ export class EmployeesService {
         department: true,
         kpiScore: true,
         isAvailable: true,
+        workStart: true,
+        workEnd: true,
       },
     });
 
-    return employees.map((emp: {
-      id: number;
-      name: string;
-      lastName: string;
-      position: string | null;
-      department: string | null;
-      kpiScore: number;
-      isAvailable: boolean;
-    }) => ({
-      ...emp,
-      isPersonalManager: false,
-    }));
+    const now = new Date();
+    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+
+    // Фильтр по рабочим часам
+    const availableEmployees = employees
+      .filter((emp) => this.isWithinWorkingHours(emp.workStart, emp.workEnd, currentTime))
+      .map(({ workStart, workEnd, ...emp }) => ({
+        ...emp,
+        isPersonalManager: false,
+      }));
+
+    return availableEmployees;
+  }
+
+  /**
+   * Проверить что текущее время входит в рабочий интервал
+   */
+  private isWithinWorkingHours(
+    workStart: string,
+    workEnd: string,
+    currentTime: string,
+  ): boolean {
+    return currentTime >= workStart && currentTime <= workEnd;
   }
 
   /**

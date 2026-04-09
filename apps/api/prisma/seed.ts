@@ -1,6 +1,10 @@
 import { PrismaClient } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const prisma = new PrismaClient();
 
@@ -12,9 +16,9 @@ async function main() {
   console.log('🌱 Seeding database...');
 
   // Load employees from JSON
-  const employeesPath = path.join(
+  const employeesPath = path.resolve(
     __dirname,
-    '../../FNR_PRO_Hackathon/data/employees.json',
+    '../../../FNR_PRO_Hackathon/data/employees.json',
   );
 
   let employeesData: any[] = [];
@@ -22,7 +26,7 @@ async function main() {
     employeesData = JSON.parse(fs.readFileSync(employeesPath, 'utf-8'));
     console.log(`📋 Loaded ${employeesData.length} employees from employees.json`);
   } catch (error) {
-    console.warn('⚠️  Could not load employees.json, using default data');
+    console.warn(`⚠️  Could not load employees.json from ${employeesPath}, using default data`);
     employeesData = [];
   }
 

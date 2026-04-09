@@ -37,13 +37,23 @@ describe('EmployeesService', () => {
   });
 
   describe('getAvailableEmployees', () => {
+    beforeEach(() => {
+      // Фиксируем время на 12:00 (попадает в 09:00-18:00)
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2026-04-09T12:00:00Z'));
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should return only available employees sorted by kpiScore DESC', async () => {
       // arrange
       // Примечание: Prisma сортирует, поэтому мок должен вернуть уже отсортированные данные
       mockPrismaService.employee.findMany.mockResolvedValue([
-        { id: 13, name: 'Марина', kpiScore: 91.0, isAvailable: true },
-        { id: 33, name: 'Александр', kpiScore: 78.5, isAvailable: true },
-        { id: 1, name: 'Алексей', kpiScore: 65.0, isAvailable: true },
+        { id: 13, name: 'Марина', kpiScore: 91.0, isAvailable: true, workStart: '09:00', workEnd: '18:00' },
+        { id: 33, name: 'Александр', kpiScore: 78.5, isAvailable: true, workStart: '09:00', workEnd: '18:00' },
+        { id: 1, name: 'Алексей', kpiScore: 65.0, isAvailable: true, workStart: '09:00', workEnd: '18:00' },
       ]);
 
       // act
@@ -63,6 +73,27 @@ describe('EmployeesService', () => {
       );
     });
 
+    it('should filter out employees outside working hours', async () => {
+      // arrange
+      // Менеджер 1: работает с 09:00 до 18:00 (включает 12:00)
+      // Менеджер 2: работает с 20:00 до 23:00 (НЕ включает 12:00)
+      mockPrismaService.employee.findMany.mockResolvedValue([
+        { id: 13, name: 'Марина', kpiScore: 91.0, isAvailable: true, workStart: '09:00', workEnd: '18:00' },
+        { id: 99, name: 'Ночной', kpiScore: 95.0, isAvailable: true, workStart: '20:00', workEnd: '23:00' },
+      ]);
+
+      // act
+      const result = await service.getAvailableEmployees();
+
+      // assert
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(13); // Только Марина (12:00 попадает в 09:00-18:00)
+      expect(result[0].name).toBe('Марина');
+      // Проверим что returned данные не содержат workStart/workEnd
+      expect(result[0]).not.toHaveProperty('workStart');
+      expect(result[0]).not.toHaveProperty('workEnd');
+    });
+
     it('should return empty array when no employees are available', async () => {
       // arrange
       mockPrismaService.employee.findMany.mockResolvedValue([]);
@@ -77,7 +108,7 @@ describe('EmployeesService', () => {
     it('should filter out unavailable employees', async () => {
       // arrange
       mockPrismaService.employee.findMany.mockResolvedValue([
-        { id: 13, name: 'Марина', kpiScore: 91.0, isAvailable: true },
+        { id: 13, name: 'Марина', kpiScore: 91.0, isAvailable: true, workStart: '09:00', workEnd: '18:00' },
       ]);
 
       // act

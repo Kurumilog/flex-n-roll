@@ -61,3 +61,6 @@ export class RoutingResultDto {
   })
   autoReplyText!: string | null;
 }
+
+// Re-export для удобства
+export { TransferResultDto } from './transfer-session.dto';

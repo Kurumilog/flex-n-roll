@@ -16,20 +16,20 @@ datasource db {
 model Employee {
   id                  Int       @id              // bitrix24 ID (из employees.json)
   name                String
-  lastName            String
+  lastName            String    @map("last_name")
   email               String    @unique
   phone               String?
   position            String?
   department          String?
-  kpiScore            Float     @default(50.0)  // 0–100
-  dealsWon            Int       @default(0)
-  dealsLost           Int       @default(0)
-  avgResponseMinutes  Float     @default(0)
-  isAvailable         Boolean   @default(true)
-  workStart           String    @default("09:00") // HH:mm
-  workEnd             String    @default("18:00")
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  kpiScore            Float     @default(50.0)  @map("kpi_score")  // 0–100
+  dealsWon            Int       @default(0)     @map("deals_won")
+  dealsLost           Int       @default(0)     @map("deals_lost")
+  avgResponseMinutes  Float     @default(0)     @map("avg_response_minutes")
+  isAvailable         Boolean   @default(true)  @map("is_available")
+  workStart           String    @default("09:00") @map("work_start") // HH:mm
+  workEnd             String    @default("18:00") @map("work_end")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt      @map("updated_at")
 
   assignments         Assignment[]
   kpiHistory          KpiHistory[]
@@ -41,14 +41,14 @@ model Employee {
 // "Личный менеджер" — кто работал с этим клиентом
 model Assignment {
   id               Int       @id @default(autoincrement())
-  clientPhone      String?
-  clientEmail      String?
-  clientBitrixId   String?   // ID контакта в Bitrix24
-  employeeId       Int
+  clientPhone      String?   @map("client_phone")
+  clientEmail      String?   @map("client_email")
+  clientBitrixId   String?   @map("client_bitrix_id")  // ID контакта в Bitrix24
+  employeeId       Int       @map("employee_id")
   employee         Employee  @relation(fields: [employeeId], references: [id])
-  interactionCount Int       @default(1)
-  lastInteraction  DateTime  @default(now())
-  createdAt        DateTime  @default(now())
+  interactionCount Int       @default(1)    @map("interaction_count")
+  lastInteraction  DateTime  @default(now()) @map("last_interaction")
+  createdAt        DateTime  @default(now()) @map("created_at")
 
   @@index([clientPhone])
   @@index([clientEmail])
@@ -58,14 +58,14 @@ model Assignment {
 
 model KpiHistory {
   id                    Int       @id @default(autoincrement())
-  employeeId            Int
+  employeeId            Int       @map("employee_id")
   employee              Employee  @relation(fields: [employeeId], references: [id])
   period                DateTime  // дата snapshot'а (начало дня)
-  dealsWon              Int
-  dealsLost             Int
-  avgResponseMinutes    Float
-  kpiScore              Float
-  createdAt             DateTime  @default(now())
+  dealsWon              Int       @map("deals_won")
+  dealsLost             Int       @map("deals_lost")
+  avgResponseMinutes    Float     @map("avg_response_minutes")
+  kpiScore              Float     @map("kpi_score")
+  createdAt             DateTime  @default(now()) @map("created_at")
 
   @@index([employeeId, period])
   @@map("kpi_history")
@@ -73,42 +73,42 @@ model KpiHistory {
 
 // Кэш лидов из Bitrix24 (синхронизируется ежечасно)
 model LeadCache {
-  bitrixId     String    @id
+  bitrixId     String    @id   @map("bitrix_id")
   title        String
-  statusId     String
-  sourceId     String?
-  assignedById Int?
+  statusId     String    @map("status_id")
+  sourceId     String?   @map("source_id")
+  assignedById Int?      @map("assigned_by_id")
   opportunity  Float     @default(0)
-  currencyId   String    @default("BYN")
-  clientName   String?
-  clientEmail  String?
-  clientPhone  String?
+  currencyId   String    @default("BYN") @map("currency_id")
+  clientName   String?   @map("client_name")
+  clientEmail  String?   @map("client_email")
+  clientPhone  String?   @map("client_phone")
   comments     String?
-  dateCreate   DateTime?
-  dateModify   DateTime?
-  dateClosed   DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  dateCreate   DateTime? @map("date_create")
+  dateModify   DateTime? @map("date_modify")
+  dateClosed   DateTime? @map("date_closed")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt      @map("updated_at")
 
   @@map("leads_cache")
 }
 
 model Mailing {
   id                Int       @id @default(autoincrement())
-  leadBitrixId      String?
-  clientEmail       String?
-  clientPhone       String?
-  clientName        String?
+  leadBitrixId      String?   @map("lead_bitrix_id")
+  clientEmail       String?   @map("client_email")
+  clientPhone       String?   @map("client_phone")
+  clientName        String?   @map("client_name")
   channel           String    // 'email' | 'telegram' | 'whatsapp'
   subject           String?
-  messageText       String
-  generatedBy       String    @default("llm")  // 'llm' | 'template'
-  employeeId        Int?
+  messageText       String    @map("message_text")
+  generatedBy       String    @default("llm")  @map("generated_by")  // 'llm' | 'template'
+  employeeId        Int?      @map("employee_id")
   employee          Employee? @relation(fields: [employeeId], references: [id])
   status            String    @default("pending")  // pending | sent | failed
-  responseReceived  Boolean   @default(false)
-  sentAt            DateTime?
-  createdAt         DateTime  @default(now())
+  responseReceived  Boolean   @default(false)      @map("response_received")
+  sentAt            DateTime? @map("sent_at")
+  createdAt         DateTime  @default(now())      @map("created_at")
 
   @@index([status])
   @@index([clientEmail])
@@ -118,17 +118,17 @@ model Mailing {
 // Входящие события от n8n (лог + дедупликация)
 model IncomingEvent {
   id            Int      @id @default(autoincrement())
-  eventId       String   @unique  // идентификатор из Bitrix24
-  eventType     String            // ONOPENLINEMESSAGEADD, ONCRMLEADADD...
+  eventId       String   @unique @map("event_id")  // идентификатор из Bitrix24
+  eventType     String   @map("event_type")         // ONOPENLINEMESSAGEADD, ONCRMLEADADD...
   channel       String            // telegram | email | whatsapp
-  clientText    String
-  clientPhone   String?
-  clientEmail   String?
-  assignedTo    Int?
-  routingReason String?
+  clientText    String   @map("client_text")
+  clientPhone   String?  @map("client_phone")
+  clientEmail   String?  @map("client_email")
+  assignedTo    Int?     @map("assigned_to")
+  routingReason String?  @map("routing_reason")
   topic         String?
   urgency       String?
-  processedAt   DateTime @default(now())
+  processedAt   DateTime @default(now()) @map("processed_at")
 
   @@map("incoming_events")
 }

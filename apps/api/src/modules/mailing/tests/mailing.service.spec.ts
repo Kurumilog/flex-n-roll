@@ -1,7 +1,15 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ConfigService } from '@nestjs/config';
 import { MailingService } from '../mailing.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { OllamaService, OllamaUnavailableException } from '../../ollama/ollama.service';
+
+// Mock nodemailer
+jest.mock('nodemailer', () => ({
+  createTransport: jest.fn().mockReturnValue({
+    sendMail: jest.fn().mockResolvedValue({ messageId: 'test-123' }),
+  }),
+}));
 
 // Mock PrismaService
 const mockPrismaService = {
@@ -21,6 +29,11 @@ const mockOllamaService = {
   chat: jest.fn(),
 };
 
+// Mock ConfigService
+const mockConfigService = {
+  get: jest.fn((key: string, defaultValue?: string) => defaultValue),
+};
+
 describe('MailingService', () => {
   let service: MailingService;
 
@@ -30,6 +43,7 @@ describe('MailingService', () => {
         MailingService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: OllamaService, useValue: mockOllamaService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -80,7 +94,7 @@ describe('MailingService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             statusId: {
-              notIn: ['CONVERTED', 'JUNK', '15', '20'],
+              notIn: ['CONVERTED', 'JUNK', '15', '16', '17', '18', '19', '20', '22'],
             },
           }),
         }),
@@ -244,6 +258,61 @@ describe('MailingService', () => {
       // assert
       expect(result.total).toBe(0);
       expect(result.responseRate).toBe(0);
+    });
+  });
+
+  describe('sendToCandidate - SMTP integration', () => {
+    const candidate = {
+      leadId: '27984',
+      clientName: 'Тимофей Мишин',
+      clientEmail: 'timofey@example.by',
+      companyTitle: 'ООО Лесной Край',
+      inactiveDays: 45,
+      statusName: 'Коммерческое предложение',
+      comments: 'Интересовался термоусадочной этикеткой',
+    };
+
+    it('should create mailing record with sent status when email channel selected', async () => {
+      // arrange
+      mockOllamaService.chat.mockResolvedValue(
+        JSON.stringify({
+          subject: 'Персональное предложение',
+          body: 'Здравствуйте! Мы подготовили для вас...',
+        }),
+      );
+      mockPrismaService.mailing.create.mockResolvedValue({ id: 1, status: 'sent' });
+
+      // act
+      await service.sendToCandidate(candidate, 'email');
+
+      // assert
+      expect(mockPrismaService.mailing.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            leadBitrixId: '27984',
+            clientEmail: 'timofey@example.by',
+            channel: 'email',
+            subject: 'Персональное предложение',
+          }),
+        }),
+      );
+    });
+
+    it('should mark as failed when database write fails', async () => {
+      // arrange
+      mockOllamaService.chat.mockResolvedValue(
+        JSON.stringify({
+          subject: 'Test',
+          body: 'Test body',
+        }),
+      );
+      mockPrismaService.mailing.create.mockRejectedValue(new Error('DB error'));
+
+      // act
+      const result = await service.sendToCandidate(candidate, 'email');
+
+      // assert
+      expect(result.status).toBe('failed');
     });
   });
 });

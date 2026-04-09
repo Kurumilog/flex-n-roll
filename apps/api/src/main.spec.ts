@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
   NotFoundException,
 } from "@nestjs/common";
-import { GlobalExceptionFilter } from "./main";
+import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
 
 describe("GlobalExceptionFilter", () => {
   let filter: GlobalExceptionFilter;
