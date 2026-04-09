@@ -12,6 +12,7 @@ import { KpiModule } from './modules/kpi/kpi.module';
 import { MailingModule } from './modules/mailing/mailing.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SyncModule } from './modules/sync/sync.module';
+import { N8nModule } from './modules/n8n/n8n.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { SyncModule } from './modules/sync/sync.module';
     MailingModule,
     AnalyticsModule,
     SyncModule,
+    N8nModule,
   ],
 })
 export class AppModule {}

@@ -21,13 +21,26 @@
       "Read(//home/kurumi/.qwen/debug/**)",
       "mcp__supabase__apply_migration",
       "mcp__supabase__execute_sql",
-      "Bash(git remote *)"
+      "Bash(git remote *)",
+      "Bash(git reset *)",
+      "Bash(git checkout *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(git config *)",
+      "Bash(npm test *)",
+      "WebFetch(docs.n8n.io)"
     ]
   },
   "mcpServers": {
     "supabase": {
       "httpUrl": "https://mcp.supabase.com/mcp",
       "timeout": 300000
+    },
+    "n8n-mcp": {
+      "url": "https://n8n.kurumi.software/mcp/cfd90fc7-90c4-4c2b-8086-436443cdd71e",
+      "headers": {
+        "Authorization": "Bearer 123456789"
+      }
     },
     "shadcn": {
       "command": "/bin/bash",
