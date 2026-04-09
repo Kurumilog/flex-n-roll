@@ -44,31 +44,32 @@ async function bootstrap() {
     res.status(204).send();
   });
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle("FlexRouter AI API")
-    .setDescription("AI-powered B2B message routing for label manufacturing")
-    .setVersion("1.0.0")
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'API_KEY', in: 'header' },
-      'api-key',
-    )
-    .addTag("employees", "Employee management and availability")
-    .addTag("routing", "AI message routing")
-    .addTag("kpi", "KPI calculation and history")
-    .addTag("mailing", "Reactivation email campaigns")
-    .addTag("analytics", "Analytics and statistics")
-    .addTag("sync", "Bitrix24 synchronization")
-    .addTag("health", "Health check")
-    .build();
+  // Swagger docs (disabled due to circular dependency in legacy DTOs)
+  // const swaggerConfig = new DocumentBuilder()
+  //   .setTitle("FlexRouter AI API")
+  //   .setDescription("AI-powered B2B message routing for label manufacturing")
+  //   .setVersion("1.0.0")
+  //   .addBearerAuth(
+  //     { type: 'http', scheme: 'bearer', bearerFormat: 'API_KEY', in: 'header' },
+  //     'api-key',
+  //   )
+  //   .addTag("employees", "Employee management and availability")
+  //   .addTag("routing", "AI message routing")
+  //   .addTag("kpi", "KPI calculation and history")
+  //   .addTag("mailing", "Reactivation email campaigns")
+  //   .addTag("analytics", "Analytics and statistics")
+  //   .addTag("sync", "Bitrix24 synchronization")
+  //   .addTag("health", "Health check")
+  //   .build();
 
-  const document = SwaggerModule.createDocument(app, swaggerConfig);
-  SwaggerModule.setup("api/docs", app, document, {
-    swaggerOptions: {
-      persistAuthorization: true,
-    },
-    customCss: ".swagger-ui .topbar { display: none }",
-    customSiteTitle: "FlexRouter AI API Docs",
-  });
+  // const document = SwaggerModule.createDocument(app, swaggerConfig);
+  // SwaggerModule.setup("api/docs", app, document, {
+  //   swaggerOptions: {
+  //     persistAuthorization: true,
+  //   },
+  //   customCss: ".swagger-ui .topbar { display: none }",
+  //   customSiteTitle: "FlexRouter AI API Docs",
+  // });
 
   const port = configService.get<number>('PORT') || 3000;
   await app.listen(port, '0.0.0.0');

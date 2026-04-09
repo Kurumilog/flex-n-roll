@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
 import { MailingService } from './mailing.service';
 import { MailingController } from './mailing.controller';
 import { OllamaModule } from '../ollama/ollama.module';
+import { PrismaService } from '../../prisma/prisma.service';
 
 @Module({
-  imports: [OllamaModule, ConfigModule],
+  imports: [OllamaModule],
   controllers: [MailingController],
-  providers: [MailingService],
+  providers: [PrismaService, MailingService],
   exports: [MailingService],
 })
 export class MailingModule {}

@@ -1,5 +1,4 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { EmployeesService } from '../employees/employees.service';
 import { OllamaService, OllamaUnavailableException } from '../ollama/ollama.service';
 import { BitrixService } from '../bitrix/bitrix.service';
@@ -24,7 +23,6 @@ export class RoutingService {
     private readonly ollamaService: OllamaService,
     private readonly bitrixService: BitrixService,
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
   ) {}
 
   /**

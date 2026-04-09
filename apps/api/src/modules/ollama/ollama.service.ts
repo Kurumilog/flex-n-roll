@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 
@@ -29,14 +29,13 @@ export class OllamaService {
   private readonly routingModel: string;
   private readonly timeoutMs: number;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(@Optional() private readonly configService?: ConfigService) {
     this.baseUrl =
-      this.configService.get<string>('OLLAMA_BASE_URL', 'http://localhost:11434');
-    this.routingModel = this.configService.get<string>(
-      'OLLAMA_ROUTING_MODEL',
-      'qwen2.5:14b-instruct',
-    );
-    this.timeoutMs = this.configService.get<number>('OLLAMA_TIMEOUT_MS', 15000);
+      this.configService?.get<string>('OLLAMA_BASE_URL') ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434';
+    this.routingModel =
+      this.configService?.get<string>('OLLAMA_ROUTING_MODEL') ?? process.env.OLLAMA_ROUTING_MODEL ?? 'qwen2.5:14b-instruct';
+    this.timeoutMs =
+      this.configService?.get<number>('OLLAMA_TIMEOUT_MS') ?? Number(process.env.OLLAMA_TIMEOUT_MS) ?? 15000;
 
     this.httpClient = axios.create({
       baseURL: this.baseUrl,

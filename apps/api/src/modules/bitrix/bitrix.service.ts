@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 
@@ -14,11 +14,9 @@ export class BitrixService {
   private readonly httpClient: AxiosInstance;
   private readonly webhookUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
-    this.webhookUrl = this.configService.get<string>(
-      'BITRIX24_WEBHOOK_URL',
-      '',
-    );
+  constructor(@Optional() private readonly configService?: ConfigService) {
+    this.webhookUrl =
+      this.configService?.get<string>('BITRIX24_WEBHOOK_URL') ?? process.env.BITRIX24_WEBHOOK_URL ?? '';
 
     this.httpClient = axios.create({
       baseURL: this.webhookUrl,

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { OllamaService, OllamaUnavailableException } from '../ollama/ollama.service';
@@ -31,16 +31,16 @@ export class MailingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly ollamaService: OllamaService,
-    private readonly configService: ConfigService,
+    @Optional() private readonly configService?: ConfigService,
   ) {
     // Инициализация nodemailer транспортера
     this.transporter = nodemailer.createTransport({
-      host: this.configService.get<string>('SMTP_HOST', 'smtp.gmail.com'),
-      port: this.configService.get<number>('SMTP_PORT', 587),
+      host: this.configService?.get<string>('SMTP_HOST') ?? process.env.SMTP_HOST ?? 'smtp.gmail.com',
+      port: this.configService?.get<number>('SMTP_PORT') ?? Number(process.env.SMTP_PORT) ?? 587,
       secure: false, // true для 465, false для 587
       auth: {
-        user: this.configService.get<string>('SMTP_USER'),
-        pass: this.configService.get<string>('SMTP_PASS'),
+        user: this.configService?.get<string>('SMTP_USER') ?? process.env.SMTP_USER,
+        pass: this.configService?.get<string>('SMTP_PASS') ?? process.env.SMTP_PASS,
       },
     });
   }
@@ -142,7 +142,7 @@ USER:
     if (channel === 'email' && candidate.clientEmail) {
       try {
         await this.transporter.sendMail({
-          from: this.configService.get<string>('SMTP_FROM', 'FlexRouter <noreply@kurumi.software>'),
+          from: this.configService?.get<string>('SMTP_FROM') ?? process.env.SMTP_FROM ?? 'FlexRouter <noreply@kurumi.software>',
           to: candidate.clientEmail,
           subject,
           html: body.replace(/\n/g, '<br>'), // Простая конвертация в HTML

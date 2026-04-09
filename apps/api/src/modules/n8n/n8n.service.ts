@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 
@@ -24,9 +24,9 @@ export class N8nService {
   private readonly httpClient: AxiosInstance;
   private readonly baseUrl: string;
 
-  constructor(private readonly configService: ConfigService) {
+  constructor(@Optional() private readonly configService?: ConfigService) {
     this.baseUrl =
-      this.configService.get<string>('N8N_BASE_URL', 'https://n8n.kurumi.software');
+      this.configService?.get<string>('N8N_BASE_URL') ?? process.env.N8N_BASE_URL ?? 'https://n8n.kurumi.software';
 
     this.httpClient = axios.create({
       baseURL: this.baseUrl,

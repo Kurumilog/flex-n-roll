@@ -10,7 +10,19 @@ describe("AppConfigService", () => {
     get: jest.fn(),
   };
 
+  // Save original env values
+  const originalEnv = { ...process.env };
+
   beforeEach(async () => {
+    // Clear relevant env vars to test defaults
+    delete process.env.NODE_ENV;
+    delete process.env.PORT;
+    delete process.env.FRONTEND_ORIGIN;
+    delete process.env.DEMO_PASSWORD;
+    delete process.env.GROQ_API_KEY;
+    delete process.env.BITRIX24_WEBHOOK_URL;
+    delete process.env.JWT_SECRET;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AppConfigService,
@@ -27,6 +39,8 @@ describe("AppConfigService", () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    // Restore original env
+    Object.assign(process.env, originalEnv);
   });
 
   it("should be defined", () => {
