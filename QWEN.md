@@ -155,21 +155,39 @@
 8. **Ollama** — Ollama LLM HTTP client (qwen2.5:14b with chat + embed)
 
 ### Next Steps (Integration)
-1. Configure Supabase connection string in `.env.local`
+1. **Add DATABASE_URL to .env.local** — Supabase connection string needed for Prisma
 2. Run `pnpm prisma:migrate` to create database tables
 3. Run `pnpm prisma:seed` to load 23 employees
-4. Start server: `pnpm dev` → API at http://localhost:3000
-5. Swagger docs: http://localhost:3000/api/docs
-6. Integrate with n8n webhooks once Bitrix24 is configured
+4. Start server: `pnpm dev` → API at http://localhost:3000 (PORT=3001 in .env.local)
+5. ~~Swagger docs~~ — Disabled due to circular dependency in legacy DTOs
+6. Configure n8n webhook routing-message endpoint + Bitrix24 event handler
 
-### Key Files
-- AGENTS.md — Complete hackathon spec (architecture, API, tests, business logic)
-- hackathon_plan.md — Detailed implementation plan with timelines
-- FNR_PRO_Hackathon/data/ — employees.json, dialogs.json, leads.json, deals.json, pipeline.json
-
-### Current State
+### Current State (PAUSED — 2026-04-09)
 - Branch: `feature/nestjs-backend`
-- Old modules (applications, metrics, pipeline, escalations, auth, profile) still exist but are NOT imported in AppModule
-- New modules directory: `src/modules/{employees,routing,kpi,mailing,bitrix,ollama,sync}`
-- Prisma schema updated for hackathon
-- Dependencies: axios, nodemailer, @nestjs/passport added
+- **Tests:** 344/344 passing ✅
+- **Typecheck:** ✅ Clean
+- **NestJS startup:** ✅ Works (all routes mapped, stops at Prisma connect — needs DATABASE_URL)
+- **n8n:** 6 workflows created + activated (Routing, KPI, Sync, Mailing, Transfer, My workflow)
+- **Bitrix24:** Webhook event handler registered (ONIMCONNECTORMESSAGEADD) → n8n/webhook/routing-message
+
+### Known Issues
+- Swagger docs disabled (circular dependency in legacy applications/ DTOs)
+- NestJS needs DATABASE_URL env var to start fully (Prisma connection)
+- Bitrix24 webhook URL in .env.local needs real value
+- Ollama Tailscale connectivity untested
+
+### What was done today (2026-04-09)
+1. Created 5 n8n workflows via API (Routing v2, KPI Recalculate, Leads Sync, Mailing, Transfer Inactive)
+2. Implemented N8nService (NestJS → n8n webhook calls)
+3. Fixed ConfigService DI failures across ALL modules (@Optional + process.env fallbacks)
+4. Downgraded @nestjs/config to 3.3.0 (v4 incompatible with NestJS v10)
+5. Created docs/n8n-api-reference.md and docs/flexrouter-full-flow.md
+6. Updated Routing workflow for ONIMCONNECTORMESSAGEADD format
+7. Disabled Swagger due to circular dependency in legacy DTOs
+
+### Next session: what to do first
+1. Add DATABASE_URL to apps/api/.env.local
+2. Run `pnpm prisma:migrate` + `pnpm prisma:seed`
+3. Verify `pnpm dev` starts fully
+4. Test `curl http://localhost:3001/api/routing/route`
+5. Test full chain: Bitrix24 → n8n → NestJS → Ollama → Bitrix24
