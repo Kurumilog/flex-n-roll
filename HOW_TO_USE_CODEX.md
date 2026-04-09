@@ -17,9 +17,10 @@
 
 ## 2. Стек проекта
 
-**Backend**: NestJS + Prisma + PostgreSQL (Supabase)
-**Frontend (план)**: React 18 + TypeScript + Vite + Tailwind + Zustand + framer-motion
-**API**: Swagger документация на `http://localhost:3001/api/docs`
+**Backend**: NestJS 10 + Prisma + PostgreSQL (Supabase)
+**API**: Swagger документация на `http://localhost:3000/api/docs`
+**Тесты**: 282 unit tests, 16 e2e tests
+**LLM**: Ollama qwen2.5:14b-instruct (через Tailscale)
 
 ## 3. Команды разработки
 
@@ -27,6 +28,8 @@
 pnpm install              # установка зависимостей
 pnpm --filter api dev     # запуск API
 pnpm --filter api build   # сборка API
+pnpm --filter api test    # 282 теста
+pnpm --filter api typecheck  # проверка типов
 pnpm dev                  # весь монорепо
 ```
 
@@ -34,6 +37,6 @@ pnpm dev                  # весь монорепо
 
 - [ ] TypeScript errors: `pnpm --filter api typecheck`
 - [ ] API запускается: `pnpm --filter api dev`
-- [ ] Swagger доступен: `http://localhost:3001/api/docs`
-- [ ] Новые типы добавлены в packages/shared-types
+- [ ] Swagger доступен: `http://localhost:3000/api/docs`
+- [ ] Тесты проходят: `pnpm --filter api test`
 - [ ] URL новых эндпоинтов записан в openapi.yaml

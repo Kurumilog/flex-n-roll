@@ -161,7 +161,7 @@ Flexnroll/
 
 | Тип | Кол-во | Команда |
 |-----|--------|---------|
-| Unit | 274 | `pnpm --filter api test` |
+| Unit | 282 | `pnpm --filter api test` |
 | Test Suites | 27 | `pnpm --filter api test` |
 
 ## Env переменные

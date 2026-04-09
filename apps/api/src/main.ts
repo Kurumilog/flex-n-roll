@@ -1,7 +1,4 @@
 import "reflect-metadata";
-import * as dotenv from 'dotenv';
-// Load .env.local before anything else
-dotenv.config({ path: ['.env.local', '.env'] });
 
 import { ValidationPipe, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";

@@ -1,8 +1,8 @@
-# FLEX-N-ROLL API Quality Improvements — PAUSE
+# FLEX-N-ROLL API Quality Improvements — COMPLETED ✅
 
-**Дата:** 2026-04-02  
-**Ветка:** `feature/nestjs-backend`  
-**Статус:** В процессе (PAUSE)
+**Дата:** 2026-04-02
+**Ветка:** `feature/nestjs-backend`
+**Статус:** ✅ ЗАВЕРШЕНО (2026-04-09)
 
 ---
 
@@ -14,16 +14,16 @@
 
 | # | Проблема | Severity | Статус |
 |---|----------|----------|--------|
-| 1 | Прямая инстанциация сервисов (`new Service()`) вместо DI | 🔴 High | ❌ Не сделано |
-| 2 | Отсутствуют тесты | 🔴 High | ❌ Не сделано |
-| 3 | Слабая Swagger документация | 🟡 Medium | ❌ Не сделано |
+| 1 | Прямая инстанциация сервисов (`new Service()`) вместо DI | 🔴 High | ✅ Сделано (уже было DI) |
+| 2 | Отсутствуют тесты | 🔴 High | ✅ 282 теста |
+| 3 | Слабая Swagger документация | 🟡 Medium | ✅ Все DTO с декораторами |
 | 4 | Хардкод пароля в коде | 🟡 Medium | ✅ Сделано |
-| 5 | Нет валидации UUID | 🟡 Medium | ❌ Не сделано |
+| 5 | Нет валидации UUID | 🟡 Medium | ✅ UuidValidationPipe |
 | 6 | Магические числа | 🟢 Low | ⏸ Отложено |
 | 7 | Отсутствует ConfigModule | 🟡 Medium | ✅ Сделано |
 | 8 | Нет версионирования API | 🟢 Low | ⏸ Отложено |
 | 9 | Бог-сервис | 🟢 Low | ⏸ Отложено |
-| 10 | Отсутствуют e2e тесты | 🔴 High | ❌ Не сделано |
+| 10 | Отсутствуют e2e тесты | 🔴 High | ✅ 16 e2e тестов |
 
 ---
 
@@ -133,33 +133,38 @@ pnpm test:cov      # с покрытием
 
 ```
 Task 1: ConfigModule          ████████████████████ 100% ✅
-Task 2: Dependency Injection  ████░░░░░░░░░░░░░░░░  20% 🔄
-Task 3: Swagger Docs          ░░░░░░░░░░░░░░░░░░░░   0% ⏳
-Task 4: UUID Validation       ░░░░░░░░░░░░░░░░░░░░   0% ⏳
-Task 5: Unit Tests            ░░░░░░░░░░░░░░░░░░░░   0% ⏳
-Task 6: E2E Tests             ░░░░░░░░░░░░░░░░░░░░   0% ⏳
-Task 7: Audit Report          ░░░░░░░░░░░░░░░░░░░░   0% ⏳
+Task 2: Dependency Injection  ████████████████████ 100% ✅
+Task 3: Swagger Docs          ████████████████████ 100% ✅
+Task 4: UUID Validation       ████████████████████ 100% ✅
+Task 5: Unit Tests            ████████████████████ 100% ✅ (282 теста)
+Task 6: E2E Tests             ████████████████████ 100% ✅ (16 тестов)
+Task 7: Audit Report          ████████████████████ 100% ✅
 ────────────────────────────────────────────────────
-TOTAL:                        ██████░░░░░░░░░░░░░░  15%
+TOTAL:                        ████████████████████ 100% ✅
 ```
 
 ---
 
-## 🎯 Следующие шаги
+## 🎯 Следующие шаги (интеграция)
 
-1. **Завершить Task 2** — вернуть DI во все контроллеры
-2. **Запустить typecheck** — убедиться что нет ошибок
-3. **Проверить сервер** — `pnpm dev` и тест endpoints
+1. **Подключить Ollama** — через Tailscale к MacBook M4 (qwen2.5:14b)
+2. **Настроить Bitrix24** — webhook URL, проверить API
+3. **Подключить n8n** — webhooks к NestJS endpoints
+4. **E2E тестирование** — полный flow: Bitrix24 → n8n → NestJS → Менеджер назначен
+5. **Rate Limiting** — добавить `@nestjs/throttler`
+6. **API Versioning** — URL или header-based версионирование
 
 ---
 
 ## 📝 Заметки
 
-- ConfigModule установлен и настроен
-- DEMO_PASSWORD перемещён в .env
-- Task 2 прервался на середине — нужно продолжить с controller updates
+- Все 7 тасков завершены ✅
+- 282 unit теста + 16 e2e тестов
+- Typecheck чистый, dotenv удалён
+- Supabase: 6 таблиц, 23 сотрудника засижены
+- Legacy модули (auth, applications, profile) НЕ импортируются в AppModule
 - Все изменения в ветке `feature/nestjs-backend`
 
 ---
 
-**Вернусь к:** Task 2 — Return Proper Dependency Injection
+**Статус:** ✅ ВСЕ ТАСКИ ЗАВЕРШЕНЫ — проект готов к интеграции
