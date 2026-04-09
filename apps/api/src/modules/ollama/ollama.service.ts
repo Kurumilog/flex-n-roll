@@ -56,6 +56,8 @@ export class OllamaService {
 
     messages.push({ role: 'user', content: prompt });
 
+    this.logger.log(`Calling Ollama: model=${this.routingModel}, baseUrl=${this.baseUrl}, timeout=${this.timeoutMs}ms`);
+
     try {
       const response = await this.httpClient.post<OllamaChatResponse>(
         '/api/chat',

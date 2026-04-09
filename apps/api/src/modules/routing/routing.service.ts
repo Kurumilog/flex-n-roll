@@ -101,8 +101,11 @@ export class RoutingService {
         })),
       );
 
+      this.logger.log('Calling OllamaService.chat()...');
       const rawResponse = await this.ollamaService.chat(prompt, this.getSystemPrompt());
+      this.logger.log(`Ollama raw response: ${rawResponse.substring(0, 100)}...`);
       const parsed = this.parseLlmResponse(rawResponse);
+      this.logger.log(`Ollama parsed: manager_id=${parsed.manager_id}, topic=${parsed.topic}`);
 
       // Найти сотрудника по ID из ответа LLM
       const selectedEmployee = availableEmployees.find(
@@ -140,8 +143,9 @@ export class RoutingService {
     } catch (error) {
       // Приоритет 3: Fallback — первый по KPI
       this.logger.warn(
-        `LLM routing failed, falling back to first by KPI: ${error instanceof Error ? error.message : error}`,
+        `LLM routing failed: ${error instanceof Error ? error.message : error}`,
       );
+      this.logger.warn(`Error stack: ${error instanceof Error ? error.stack : 'N/A'}`);
 
       const firstByKpi = availableEmployees[0];
 

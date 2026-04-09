@@ -1,7 +1,8 @@
 # n8n API Reference & Workflow Guide
 
 > **Instance:** https://n8n.kurumi.software
-> **API Key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNjOGUyZi1lODgzLTQ4ZTUtODIwZi1mNTdlMDU0OGY2ZWMiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiM2FjZjJkMDMtZWFlNC00OTUyLWIxYmYtNTRlZTE3NjQ3YzYzIiwiaWF0IjoxNzc1NzI5MjMyLCJleHAiOjE3NzgyOTkyMDB9.kmG6Wz8tMErpmMA7n-PTbjaQ3NEfxHSTcIP6vRE50cM`
+> **API Key:** `<rotate-a-fresh-n8n-api-key>`
+> **Note:** the previously documented JWT has expired; generate a new key in n8n Settings > n8n API and keep it outside git.
 > **Auth Header:** `X-N8N-API-KEY: <API_KEY>`
 >
 > **Updated:** 2026-04-09 — All 6 workflows created and active

@@ -90,14 +90,34 @@
   - ✅ SyncController: POST /sync/leads, GET /sync/cache-stats
   - ✅ BitrixService: Full REST API wrapper with retry logic for rate limits
 
-### Current State (2026-04-09 21:00)
+### Current State (2026-04-10 00:00)
 - ✅ All 6 phases complete, **344 tests passing**
 - ✅ Typecheck clean
 - ✅ Supabase: 6 tables created, 23 employees seeded
 - ✅ **SERVER RUNNING** — NestJS API на порту 3001, все endpoints работают
-- ✅ **DI ISSUE FIXED** — PrismaService успешно инжектится во все сервисы
-- ✅ n8n: 6 workflows created + activated (Routing, KPI, Sync, Mailing, Transfer, My workflow)
-- ✅ Bitrix24: Webhook event handler registered (ONIMCONNECTORMESSAGEADD) → n8n/webhook/routing-message
+- ✅ **INTEGRATION PHASE** — n8n → NestJS → Ollama работает (~30-35s полный поток)
+- ✅ **Nginx proxy** — `/nestjs-api/` → NestJS через VPS (159.65.122.92)
+- ✅ **Bitrix24 webhook** — scope расширены: `crm`, `im`, `task`, `user`
+- ✅ **n8n workflow** — Transfer Session заменён на Notify Manager (im.message.add)
+- ⏳ **Open Lines не подключён** — нужен для полного E2E теста
+
+### Integration Test Results (2026-04-09 evening)
+```bash
+# NestJS → Ollama ✅ (LLM routing работает)
+curl -X POST http://localhost:3001/api/routing/route \
+  -H "x-api-key: dev-secret-key-change-in-production" \
+  -H "Content-Type: application/json" \
+  -d '{"messageText":"Нужна этикетка 58х40мм тираж 50000","channel":"telegram"}'
+→ {"success":true,"data":{"managerId":47,"managerName":"Ольга","topic":"technical_specs","urgency":"medium","reason":"Запрос конкретных технических параметров..."}}
+
+# n8n → NestJS → Ollama ✅ (через VPS proxy)
+curl https://n8n.kurumi.software/nestjs-api/health
+→ {"status":"ok"}
+
+# n8n workflow execution ✅ (30-35s, NestJS+Ollama проходят)
+# Ошибка на Bitrix24 шагах — тестовый curl не имеет реальной сессии
+# Для полного теста нужно сообщение из подключённого Open Lines
+```
 
 ### Endpoint Test Results (2026-04-09 21:00)
 ```bash
@@ -196,22 +216,24 @@ curl -X POST http://localhost:3001/api/routing/route \
 - Bitrix24 webhook URL in .env.local needs real value
 - Ollama Tailscale connectivity untested
 
-### What was done today (2026-04-09)
-1. Created 5 n8n workflows via API (Routing v2, KPI Recalculate, Leads Sync, Mailing, Transfer Inactive)
-2. Implemented N8nService (NestJS → n8n webhook calls)
-3. Fixed ConfigService DI failures across ALL modules (@Optional + process.env fallbacks)
-4. Downgraded @nestjs/config to 3.3.0 (v4 incompatible with NestJS v10)
-5. Created docs/n8n-api-reference.md and docs/flexrouter-full-flow.md
-6. Updated Routing workflow for ONIMCONNECTORMESSAGEADD format
-7. Disabled Swagger due to circular dependency in legacy DTOs
+### What was done today (2026-04-09 evening — Integration Session)
+1. ✅ **PrismaService fixed** — убран global singleton, prepared statements conflict resolved
+2. ✅ **Ollama model fixed** — `qwen2.5:14b-instruct` → `qwen2.5:14b`, timeout 60s
+3. ✅ **Nginx proxy setup** — `/nestjs-api/` → NestJS через VPS (159.65.122.92)
+4. ✅ **n8n workflow updated** — URL на `https://n8n.kurumi.software/nestjs-api/routing/route`
+5. ✅ **Transfer Session → Notify Manager** — заменён `imopenlines.session.transfer` на `im.message.add`
+6. ✅ **UFW rule** — открыт порт 3001 для Tailscale
+7. ✅ **Bitrix24 scope expanded** — добавлены `im`, `task` (imopenlines недоступен через webhook)
+8. ✅ **workEnd temporarily extended** — до 23:59 для тестирования
+9. ✅ **Full n8n → NestJS → Ollama flow** — работает за ~30-35 секунд
+10. 📝 **docs/bitrix24-setup-instruction.md** — создана инструкция по настройке Bitrix24
+11. 🗑 **Nginx duplicate configs cleaned** — удалены `n8n`, `api.kurumi.software` symlinks
 
 ### Next session: what to do first
-1. ✅ **FIX DI ISSUE** — Исправлено (см. ниже)
-2. ✅ Add DATABASE_URL to apps/api/.env.local
-3. ✅ Run `pnpm prisma:migrate` + `pnpm prisma:seed`
-4. ✅ Verify `pnpm dev` starts fully
-5. ✅ Test `curl http://localhost:3001/api/routing/route`
-6. ⏭ Test full chain: Bitrix24 → n8n → NestJS → Ollama → Bitrix24
+1. ⏭ **Подключить Open Lines** — Telegram/WhatsApp канал в Bitrix24
+2. ⏭ **E2E тест** — написать сообщение → полный flow до менеджера
+3. ⏭ **Восстановить workEnd** — вернуть актуальные рабочие часы
+4. ⏭ **Включить SMTP** — когда нужен mailing
 
 ---
 

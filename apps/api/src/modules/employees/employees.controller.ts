@@ -16,6 +16,7 @@ import {
 } from '@nestjs/swagger';
 import { EmployeesService } from './employees.service';
 import { UpdateAvailabilityDto } from './dto/update-availability.dto';
+import { UpdateWorkHoursDto } from './dto/update-workhours.dto';
 import {
   AvailableEmployeesResponseDto,
   EmployeeResponseDto,
@@ -105,6 +106,41 @@ export class EmployeesController {
     const result = await this.employeesService.updateAvailability(
       id,
       dto.isAvailable,
+    );
+
+    return {
+      success: true,
+      data: result,
+    };
+  }
+
+  @Patch(':id/workhours')
+  @ApiOperation({
+    summary: 'Обновить рабочее время менеджера',
+    description:
+      'Временно обновить workEnd для тестирования маршрутизации.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Рабочее время обновлено',
+    schema: {
+      example: {
+        success: true,
+        data: { id: 13, name: 'Марина', workEnd: '23:59' },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'Менеджер не найден' })
+  async updateWorkHours(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() dto: UpdateWorkHoursDto,
+  ): Promise<{
+    success: boolean;
+    data: { id: number; name: string; workEnd: string };
+  }> {
+    const result = await this.employeesService.updateWorkHours(
+      id,
+      dto.workEnd,
     );
 
     return {

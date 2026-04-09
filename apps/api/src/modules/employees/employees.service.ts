@@ -151,6 +151,34 @@ export class EmployeesService {
   }
 
   /**
+   * Обновить рабочее время менеджера (для тестирования)
+   */
+  async updateWorkHours(
+    id: number,
+    workEnd: string,
+  ): Promise<{ id: number; name: string; workEnd: string }> {
+    try {
+      const employee = await this.prisma.employee.update({
+        where: { id },
+        data: { workEnd },
+        select: {
+          id: true,
+          name: true,
+          workEnd: true,
+        },
+      });
+
+      this.logger.log(
+        `Employee ${employee.name} workEnd updated to ${workEnd}`,
+      );
+      return employee;
+    } catch (error) {
+      this.logger.error(`Failed to update workEnd for employee ${id}`, error);
+      throw new NotFoundException(`Employee with ID ${id} not found`);
+    }
+  }
+
+  /**
    * Обновить доступность менеджера
    */
   async updateAvailability(
