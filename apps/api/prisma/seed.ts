@@ -74,6 +74,30 @@ async function main() {
           }),
         },
       });
+
+      // Generate 30 days of mock KPI history for the sparkline
+      const baseScore = overrides?.kpiScore || 50;
+      const historyData = Array.from({ length: 30 }).map((_, i) => {
+        const date = new Date();
+        date.setDate(date.getDate() - (29 - i));
+        
+        // Add some random fluctuation (-5 to +5)
+        const fluctuation = (Math.random() * 10 - 5);
+        let score = baseScore + fluctuation;
+        score = Math.max(0, Math.min(100, score)); // Clamp 0-100
+
+        return {
+          employeeId: id,
+          period: date,
+          kpiScore: score,
+          dealsWon: overrides?.dealsWon || 0,
+          dealsLost: overrides?.dealsLost || 0,
+          avgResponseMinutes: 15,
+        };
+      });
+
+      await prisma.kpiHistory.deleteMany({ where: { employeeId: id } });
+      await prisma.kpiHistory.createMany({ data: historyData });
     }
 
     console.log(`✅ Seeded ${employeesData.length} employees`);

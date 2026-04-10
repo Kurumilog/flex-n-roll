@@ -1,95 +1,68 @@
-# Where I Stopped — 2026-04-10 00:00
+# Where I Stopped — 2026-04-10 07:05
 
 ## Current Status
 - **Branch:** `feature/nestjs-backend`
 - **Tests:** 344/344 passing ✅
 - **Typecheck:** ✅ Clean
 - **NestJS server:** ✅ RUNNING on port 3001
-- **Integration:** n8n → NestJS → Ollama ✅ (полный поток работает, ~30s)
-- **Bitrix24:** Webhook scope расширены (crm, im, task, user). imopenlines недоступен через webhook.
+- **Integration:** n8n → NestJS → Ollama ✅ (полный поток работает, ~12-16s)
+- **Bitrix24:** Webhook scope: `crm`, `im`, `task`, `user`. `imopenlines.*` недоступен через webhook. OAuth приложение создано.
 
-## ✅ RESOLVED Issues (Session 2026-04-09 evening)
+## ✅ n8n Workflow Fixes (2026-04-10 06:30-07:00)
 
-### 1. PrismaService — Prepared Statements Conflict
-**Проблема:** `prepared statement "s0" already exists` при Supabase pooling
-**Решение:** Убран global singleton — каждый процесс создаёт свой PrismaClient
-**Файл:** `apps/api/src/prisma/prisma.service.ts`
+Все 6 воркфлоу протестированы и исправлены:
 
-### 2. Ollama Model Name Mismatch
-**Проблема:** `OLLAMA_ROUTING_MODEL=qwen2.5:14b-instruct` но в Ollama только `qwen2.5:14b`
-**Решение:** Исправлено на `qwen2.5:14b`, timeout увеличен до 60s
-**Файл:** `apps/api/.env.local`
+| Workflow | Исправление | Статус |
+|----------|------------|--------|
+| **KPI Recalculate** | Порт 3000 → 3001 | ✅ |
+| **Mailing** | Порт 3000 → 3001 (2 ноды) | ✅ |
+| **Leads Sync** | Порт 3000 → 3001 + pagination fix (offset → cursor `next`) | ✅ |
+| **Transfer Inactive** | Порт 3000 → 3001 | ✅ (но `imopenlines.*` не работает без OAuth) |
+| **Routing** | Уже правильный (через VPS proxy) | ✅ |
+| **AI Lead Analysis** | Groq, не относится к FlexRouter | — |
 
-### 3. Nginx Proxy для n8n → NestJS
-**Проблема:** n8n (MacBook M4) не мог достучаться до NestJS (100.80.124.27:3001) через Tailscale
-**Решение:** Nginx proxy на VPS: `/nestjs-api/` → `http://100.80.124.27:3001/api/`
-**Файл:** `/etc/nginx/sites-available/n8n.kurumi.software` (на VPS 159.65.122.92)
+## ✅ Sync Fix (2026-04-10 06:45)
 
-### 4. n8n Workflow — Bitrix24 Scope Limitation
-**Проблема:** `imopenlines.session.transfer` недоступен через webhook (нет scope `imopenlines`)
-**Решение:** Заменён на `im.message.add` (Notify Manager) — отправка уведомления менеджеру в чат
-**Файл:** n8n workflow `FlexRouter — Routing` (iHnbF3T4HFjEgzY4)
+1. **Bitrix24 pagination** — `getLeads()` переделан с numeric offset на cursor pagination (`next`). Загружает все 215 лидов.
+2. **Type mismatch** — `ASSIGNED_BY_ID` из строки `"1"` конвертируется в `parseInt()` для Prisma Int.
+3. **Результат:** 215/215 synced ✅, LeadCache populated.
 
-### 5. UFW Firewall Rule
-**Проблема:** Порт 3001 заблокирован для Tailscale трафика
-**Решение:** `sudo ufw allow in on tailscale0 to any port 3001 proto tcp`
+## ✅ End-to-End Tests (2026-04-10 07:00)
 
-### 6. Nginx Duplicate Configs
-**Проблема:** 3 конфликтующих конфига для n8n.kurumi.software
-**Решение:** Удалены дубликаты (`n8n`, `api.kurumi.software`), оставлен один `n8n.kurumi.software`
+| Endpoint | Результат | Статус |
+|----------|-----------|--------|
+| `POST /api/sync/leads` | 215/215 synced | ✅ |
+| `GET /api/sync/cache-stats` | 215 leads | ✅ |
+| `POST /api/routing/route` | managerId=47 (Ольга), topic=technical_specs | ✅ |
+| `GET /api/employees/available` | 5 available | ✅ |
+| `GET /api/analytics/funnel` | 197 NEW, 11 CONVERTED | ✅ |
 
-### 7. Employee Work Hours Filter
-**Проблема:** `workEnd: "18:00"` — все сотрудники отфильтрованы после 18:00
-**Решение:** Временно обновлено до `23:59` для тестирования (через PATCH /employees/:id/workhours)
+## ✅ OAuth Application (2026-04-10 06:10)
+
+Создано серверное OAuth приложение в Bitrix24:
+- **Client ID:** `local.69d869d2c008b9.92913433`
+- **Client Secret:** сохранён в QWEN.md
+- **Scopes:** `crm`, `user`, `imopenlines`, `imbot`, `im`, `tasks`, `task`
+- **Handler URL:** `https://n8n.kurumi.software/webhook/routing-message`
+- **Авторизация:** требует OAuth авторизации (портал `b24-p0ujtw.bitrix24.ru` не проходит через `oauth.bitrix24.ru`)
 
 ## Files Changed (this session)
-- `apps/api/src/prisma/prisma.service.ts` — убран global singleton
-- `apps/api/src/modules/employees/employees.service.ts` — добавлен updateWorkHours()
-- `apps/api/src/modules/employees/employees.controller.ts` — PATCH /:id/workhours endpoint
-- `apps/api/src/modules/employees/dto/update-workhours.dto.ts` — **НОВЫЙ**
-- `apps/api/src/modules/routing/routing.service.ts` — добавлено детальное логирование Ollama
-- `apps/api/src/modules/ollama/ollama.service.ts` — добавлено логирование вызова
-- `apps/api/.env.local` — OLLAMA_ROUTING_MODEL, OLLAMA_TIMEOUT_MS=60000, DATABASE_URL port 5432
-- `docs/n8n-api-reference.md` — обновлён
-- `docs/bitrix24-setup-instruction.md` — **НОВЫЙ** — инструкция по настройке Bitrix24
-- `docs/flexrouter-full-flow.md` — обновлён
-- `scripts/update-n8n-bitrix.js` — **НОВЫЙ**
-- `scripts/fix-n8n-connections.js` — **НОВЫЙ**
-- `scripts/recreate-n8n-routing.js` — **НОВЫЙ**
-- `scripts/temp-extend-workhours.ts` — **НОВЫЙ**
-- `scripts/test-ollama.ts` — **НОВЫЙ**
 
-## What's Next (Integration)
+- `apps/api/src/modules/bitrix/bitrix.service.ts` — добавлен `callWithCursor()` для pagination fix
+- `apps/api/src/modules/sync/sync.service.ts` — `ASSIGNED_BY_ID` parseInt fix + debug logging
+- `docs/superpowers/specs/2026-04-10-n8n-workflow-audit-fixes.md` — **НОВЫЙ** — полный audit отчёт
+
+## What's Next
+
 1. **Подключить Open Lines** в Bitrix24 (Telegram/WhatsApp канал) — нужно для реального E2E теста
-2. **Протестировать полный поток** — Bitrix24 сообщение → n8n → NestJS → Ollama → Notify Manager + Create Task
-3. **Восстановить workEnd** — вернуть актуальные рабочие часы после hackathon демо
-4. **SMTP** — отключён (опционален), включить когда будет нужен для mailing
+2. **OAuth авторизация** — починить авторизацию OAuth приложения (портал `b24-p0ujtw.bitrix24.ru`)
+3. **Протестировать полный поток** — Bitrix24 сообщение → n8n → NestJS → Ollama → Notify Manager + Create Task
+4. **Восстановить workEnd** — вернуть актуальные рабочие часы после hackathon демо
+5. **SMTP** — отключён (опционален), включить когда будет нужен для mailing
 
 ## How to Start Server
 ```bash
 cd /home/kurumi/code/hackathon/Flexnroll/apps/api
-pnpm dev
+npx dotenv-cli -e .env.local -- node dist/main.js
 ```
 Server runs on **http://localhost:3001**
-
-## Verified Endpoints
-```bash
-# Health ✅
-curl http://localhost:3001/api/health
-→ {"status":"ok","service":"flex-n-roll-api"}
-
-# Employees (23 available) ✅
-curl http://localhost:3001/api/employees/available
-→ {"success":true,"data":{"employees":[23 items],"personalManagerId":null}}
-
-# Routing (Ollama LLM working!) ✅
-curl -X POST http://localhost:3001/api/routing/route \
-  -H "x-api-key: dev-secret-key-change-in-production" \
-  -H "Content-Type: application/json" \
-  -d '{"messageText":"Нужна этикетка 58х40мм","channel":"telegram"}'
-→ {"success":true,"data":{"managerId":33,"managerName":"Александр","topic":"technical_specs","urgency":"medium","reason":"..."}}
-
-# NestJS via VPS proxy ✅
-curl https://n8n.kurumi.software/nestjs-api/health
-→ {"status":"ok"}
-```

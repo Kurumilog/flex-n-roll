@@ -4,7 +4,7 @@
 > **API Key:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNjOGUyZi1lODgzLTQ4ZTUtODIwZi1mNTdlMDU0OGY2ZWMiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiM2FjZjJkMDMtZWFlNC00OTUyLWIxYmYtNTRlZTE3NjQ3YzYzIiwiaWF0IjoxNzc1NzI5MjMyLCJleHAiOjE3NzgyOTkyMDB9.kmG6Wz8tMErpmMA7n-PTbjaQ3NEfxHSTcIP6vRE50cM`
 > **Auth Header:** `X-N8N-API-KEY: <API_KEY>`
 >
-> **Updated:** 2026-04-09 — All 6 workflows created and active
+> **Updated:** 2026-04-10 — All 6 workflows fixed (port 3001), LeadCache sync working (215 leads)
 
 ---
 
@@ -67,7 +67,7 @@ X-N8N-API-KEY: <API_KEY>
 {
   "parameters": {
     "method": "GET",
-    "url": "http://100.80.124.27:3000/api/employees/available",
+    "url": "http://100.80.124.27:3001/api/employees/available",
     "sendHeaders": true,
     "headerParameters": {
       "parameters": [
@@ -254,7 +254,7 @@ curl -s -X GET "https://n8n.kurumi.software/api/v1/workflows/{id}" \
 - **Публичный URL:** https://n8n.kurumi.software
 
 ### NestJS Access from n8n
-- **NestJS URL:** `http://100.80.124.27:3000` (Tailscale IP)
+- **NestJS URL:** `http://100.80.124.27:3001` (Tailscale IP) — **порт 3001, не 3000!**
 - **API Key:** `dev-secret-key-change-in-production` (из .env)
 - **Header:** `x-api-key: <API_SECRET_KEY>`
 

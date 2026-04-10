@@ -134,7 +134,7 @@ Flexnroll/
 | Framework | NestJS | 10.4.22 |
 | ORM | Prisma | 5.22.0 |
 | Database | Supabase (PostgreSQL) | — |
-| LLM | Ollama (qwen2.5:14b-instruct) | — |
+| LLM | Ollama (qwen2.5:14b) | — |
 | HTTP Client | Axios | 1.14.0 |
 | Email | Nodemailer | 6.10.1 |
 | Swagger | @nestjs/swagger | 8.1.1 |
@@ -161,8 +161,8 @@ Flexnroll/
 
 | Тип | Кол-во | Команда |
 |-----|--------|---------|
-| Unit | 282 | `pnpm --filter api test` |
-| Test Suites | 27 | `pnpm --filter api test` |
+| Unit | 348 | `pnpm --filter api test` |
+| Test Suites | 32 | `pnpm --filter api test` |
 
 ## Env переменные
 
@@ -174,8 +174,8 @@ Flexnroll/
 | `BITRIX24_WEBHOOK_URL` | webhook для Битрикс24 REST API | Bitrix24 → Маркетплейс |
 | `BITRIX24_INCOMING_SECRET` | секрет для валидации входящих событий | Bitrix24 → Маркетплейс |
 | `OLLAMA_BASE_URL` | URL Ollama API (Tailscale IP MacBook друга) | `http://100.x.x.x:11434` |
-| `OLLAMA_ROUTING_MODEL` | модель для маршрутизации | `qwen2.5:14b-instruct` |
-| `OLLAMA_TIMEOUT_MS` | таймаут Ollama в мс (15000) | local |
+| `OLLAMA_ROUTING_MODEL` | модель для маршрутизации | `qwen2.5:14b` |
+| `OLLAMA_TIMEOUT_MS` | таймаут Ollama в мс (60000) | local |
 | `SMTP_HOST` | SMTP сервер для рассылок | gmail/outlook |
 | `SMTP_PORT` | SMTP порт (587) | local |
 | `SMTP_USER` | SMTP пользователь | local |

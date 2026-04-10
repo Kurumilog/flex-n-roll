@@ -77,9 +77,10 @@ describe('OllamaService', () => {
             { role: 'user', content: 'Клиент хочет расчёт цены' },
           ],
           stream: false,
+          keep_alive: -1,
           options: expect.objectContaining({
             temperature: 0.1,
-            num_predict: 500,
+            num_predict: 150,
           }),
         }),
       );
@@ -360,6 +361,40 @@ describe('OllamaService', () => {
 
       // assert
       expect((ollamaService as any).routingModel).toBe('llama3:70b');
+    });
+  });
+
+  describe('onModuleInit (warmup)', () => {
+    it('should log success when warmup succeeds', async () => {
+      // arrange
+      const mockPost = jest.fn().mockResolvedValue({
+        data: { model: 'qwen2.5:14b-instruct', message: { role: 'assistant', content: 'OK' }, done: true },
+      });
+      mockHttpClient.post = mockPost;
+      const logSpy = jest.spyOn((service as any).logger, 'log');
+
+      // act
+      await service.onModuleInit();
+
+      // assert
+      expect(logSpy).toHaveBeenCalledWith('Warming up Ollama...');
+      expect(logSpy).toHaveBeenCalledWith('Ollama warmed up ✅');
+    });
+
+    it('should log warning when warmup fails', async () => {
+      // arrange
+      const mockPost = jest.fn().mockRejectedValue(Object.assign(new Error('connect ECONNREFUSED'), {
+        code: 'ECONNREFUSED',
+        isAxiosError: true,
+      }));
+      mockHttpClient.post = mockPost;
+      const warnSpy = jest.spyOn((service as any).logger, 'warn');
+
+      // act
+      await service.onModuleInit();
+
+      // assert
+      expect(warnSpy).toHaveBeenCalledWith('Ollama warmup failed — загрузится при первом запросе');
     });
   });
 

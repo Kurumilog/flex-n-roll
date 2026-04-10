@@ -14,6 +14,9 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { N8nModule } from './modules/n8n/n8n.module';
 import { TestService, TestDiController } from './test-di.controller';
+import { TrackingModule } from './tracking/tracking.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { BitrixProxyModule } from './modules/bitrix-proxy/bitrix-proxy.module';
 
 @Module({
   imports: [
@@ -33,6 +36,9 @@ import { TestService, TestDiController } from './test-di.controller';
     AnalyticsModule,
     SyncModule,
     N8nModule,
+    TrackingModule,
+    DashboardModule,
+    BitrixProxyModule,
   ],
   providers: [TestService],
   controllers: [TestDiController],

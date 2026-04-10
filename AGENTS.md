@@ -24,8 +24,9 @@
 |---|---|---|
 | Runtime | Node.js | 20 LTS |
 | Framework | NestJS | 10.x |
+| Frontend | React + Vite + TailwindCSS | — |
 | Language | TypeScript | 5.x |
-| Database | Supabase (PostgreSQL 15) | — |
+| Database | Supabase (PostgreSQL 15) | PGBouncer session pools |
 | ORM | Prisma | 5.x |
 | HTTP Client | Axios | — |
 | Email | Nodemailer | — |
@@ -35,10 +36,10 @@
 | Package Manager | pnpm | — |
 
 **Внешние сервисы:**
-- **Bitrix24** (облако) — CRM, Open Lines (Telegram/WhatsApp/Email), API
+- **Bitrix24** (облако) — CRM, Open Lines (Telegram/WhatsApp/Email), API, Embedded UI-Dashboard.
 - **n8n** (локально на MacBook M4) — оркестрация воркфлоу, вызывает этот NestJS
 - **Ollama** (на MacBook M4) — `qwen2.5:14b-instruct` для маршрутизации и генерации текста
-- **DigitalOcean VPS** — Nginx + SSL (kurumi.software) + Tailscale → туннель до MacBook M4
+- **DigitalOcean VPS** — Nginx + SSL (kurumi.software / dashboard.kurumi.software) + Tailscale → туннель до MacBook M4. Размещение фронтенд UI для дашборда Bitrix.
 
 ---
 
@@ -282,8 +283,8 @@ model IncomingEvent {
 Файл `.env`:
 
 ```env
-# Database
-DATABASE_URL="postgresql://USER:PASS@db.xxxx.supabase.co:5432/postgres"
+# Database (Используйте прямую сессию port 5432 для защиты от падений при высокой конкуренции Dashboard-утилит)
+DATABASE_URL="postgresql://USER:PASS@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?connection_limit=50&pool_timeout=60"
 
 # Bitrix24
 BITRIX24_WEBHOOK_URL="https://hackathon-team-xx.bitrix24.ru/rest/1/XXXXX"

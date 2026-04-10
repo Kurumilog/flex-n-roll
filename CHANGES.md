@@ -1,8 +1,71 @@
+# Frontend UI/UX & API Updates — Changes Summary
+
+**Date:** 2026-04-10
+**Branch:** `feature/nestjs-backend`
+
+--- 
+
+## Latest Update — 2026-04-10 09:30: Next.js Frontend Integration
+
+### Проблема
+Мобильный интерфейс главной страницы трекинга разъезжался: плейсхолдер съезжал под кнопку поиска, а текст таймлайна (лево/право) налезал на центральную ось. Таймлайны содержали хардкод (Октябрь 2026).
+
+### Решение
+| File | Change |
+|------|--------|
+| `apps/web/src/app/page.tsx` | Исправлен `placeholder` поиска (truncate, nowrap), кнопка корректно держится в row. Таймлайн перестроен в строго левосторонний вертикальный список (без наскоков текста) |
+| `apps/api/src/tracking/tracking.service.ts` | Удален хардкод 2026-10. Промпт для Ollama теперь вычисляет настоящую дату через `new Date()`, с шагами `dayMinus2`, `today`, `dayPlus5`. |
+| `apps/web/src/app/manager/page.tsx` | Внедрен интерактивный UI для менеджера со смарт-поиском, кнопками выбора и историей трекинг-номеров, генерация работает через настоящий API. |
+
+### Результат
+- ✅ Полностью отзывчивый (responsive) клиентский tracking-portal
+- ✅ Реальные даты доставки (Апрель 2026)
+- ✅ Деплой стабилен через `rsync`
+
+---
+
 # API Quality Improvements — Changes Summary
 
 **Date:** 2026-04-09
 **Branch:** `feature/nestjs-backend`
 **Plan:** `docs/superpowers/plans/2026-04-03-api-quality-improvements.md`
+
+---
+
+## Latest Update — 2026-04-10 02:15: Performance Optimizations
+
+### Цель
+Ускорить маршрутизацию с ~35-39s до ~12-16s за счёт устранения загрузки модели из VRAM и кэширования запросов.
+
+### Изменения
+
+| File | Change | Impact |
+|------|--------|--------|
+| `ollama.service.ts` | `implements OnModuleInit` + `onModuleInit()` warmup | **-23s** на первый запрос |
+| `ollama.service.ts` | `keep_alive: -1` в `/api/chat` запросе | **убирает 20-27s reload** между запросами |
+| `ollama.service.ts` | `num_predict: 500` → `num_predict: 150` | **-1-3s** на запрос (JSON короткий) |
+| `employees.service.ts` | In-memory кэш 60s TTL для `getAvailableEmployees()` | **200ms → 11ms** (20x) |
+| `employees.service.ts` | Cache invalidation в `updateAvailability()` | Свежие данные при изменениях |
+| `ollama.service.spec.ts` | Updated `num_predict: 500` → `150` + 2 warmup tests | **+2 tests** |
+| `employees.service.spec.ts` | +2 cache tests (caching + invalidation) | **+2 tests** |
+
+### Результаты (real benchmarks)
+
+| Метрика | До | После | Δ |
+|---------|-----|-------|---|
+| Server startup + warmup | ~5s | ~9s | +4s (warmup) |
+| First routing request | ~35-39s | ~16s | **-60%** |
+| Subsequent routing | ~27-35s (при >5min gap) | ~11-15s | **-55%** |
+| Employees API (cached) | ~200ms | ~11ms | **-95%** |
+| Total tests | 344 | **348** | +4 |
+
+### Routing Quality (4/4 correct)
+| Запрос | Менеджер | Topic | Urgency | Оценка |
+|--------|----------|-------|---------|--------|
+| Расчёт стоимости, бутылка вина, термоусадочная, 30K | Александр (33) | `price_negotiation` | `medium` | ✅ Correct: specialist |
+| Срочно! Этикетка 58x40мм, 50K, горит | Марина (13) | `urgent_reorder` | `high` | ✅ Correct: top KPI + urgency |
+| Многослойная этикетка, тиснение фольгой, 100K | Марина (13) | `technical_specs` | `medium` | ✅ Correct: complex labels |
+| Краска облезает, заменить 20K | Марина (13) | `complaint` | `high` | ✅ Correct: complaint + urgency |
 
 ---
 
@@ -176,11 +239,13 @@ pnpm-lock.yaml
 | Metric | Before | After | Change |
 |--------|--------|-------|--------|
 | DTOs with Swagger docs | 2/5 (40%) | 5/5 (100%) | +60% |
-| Unit test files | 3 | 27 | +24 |
+| Unit test files | 3 | 32 | +29 |
 | E2E test files | 0 | 3 | +3 |
-| Unit tests | 33 | 282 | +249 |
+| Unit tests | 33 | 348 | +315 |
 | E2E tests | 16 | 16 | — |
-| Total tests | 49 | 298 | +249 |
+| Total tests | 49 | 364 | +315 |
+| First routing request | ~35-39s | ~16s | -60% |
+| Employees API (cached) | ~200ms | ~11ms | -95% |
 | UUID validation | None | Pipe + decorators | ✅ |
 | Config validation | None | Full schema | ✅ |
 | Test scripts | None | 4 scripts | ✅ |

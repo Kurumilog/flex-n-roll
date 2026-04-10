@@ -1,4 +1,4 @@
-import { Injectable, Logger, Optional, Inject } from '@nestjs/common';
+import { Injectable, Logger, Optional, Inject, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosInstance } from 'axios';
 
@@ -22,7 +22,7 @@ interface OllamaChatResponse {
  * Любая ошибка Ollama → graceful fallback.
  */
 @Injectable()
-export class OllamaService {
+export class OllamaService implements OnModuleInit {
   private readonly logger = new Logger(OllamaService.name);
   private readonly httpClient: AxiosInstance;
   private readonly baseUrl: string;
@@ -42,6 +42,20 @@ export class OllamaService {
       timeout: this.timeoutMs,
       headers: { 'Content-Type': 'application/json' },
     });
+  }
+
+  /**
+   * Warmup: загрузить модель в VRAM при старте приложения.
+   * Убирает 20-27с задержку на первый запрос.
+   */
+  async onModuleInit() {
+    this.logger.log('Warming up Ollama...');
+    try {
+      await this.chat('OK', 'OK');
+      this.logger.log('Ollama warmed up ✅');
+    } catch {
+      this.logger.warn('Ollama warmup failed — загрузится при первом запросе');
+    }
   }
 
   /**
@@ -65,9 +79,10 @@ export class OllamaService {
           model: this.routingModel,
           messages,
           stream: false,
+          keep_alive: -1,        // не выгружать модель из VRAM
           options: {
-            temperature: 0.1, // Низкая температура для детерминированных ответов
-            num_predict: 500,
+            temperature: 0.1,    // низкая температура для детерминированных ответов
+            num_predict: 150,    // маршрутизация отвечает коротким JSON, 500 — избыточно
           },
         },
       );

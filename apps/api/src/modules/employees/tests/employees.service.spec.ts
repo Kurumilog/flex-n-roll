@@ -118,6 +118,40 @@ describe('EmployeesService', () => {
       expect(result).toHaveLength(1);
       expect(result[0].isAvailable).toBe(true);
     });
+
+    it('should cache results and not query DB on second call within TTL', async () => {
+      // arrange
+      mockPrismaService.employee.findMany.mockResolvedValue([
+        { id: 13, name: 'Марина', kpiScore: 91.0, isAvailable: true, workStart: '09:00', workEnd: '18:00' },
+      ]);
+
+      // act
+      await service.getAvailableEmployees();
+      await service.getAvailableEmployees();
+
+      // assert — Prisma called only once
+      expect(mockPrismaService.employee.findMany).toHaveBeenCalledTimes(1);
+    });
+
+    it('should invalidate cache after updateAvailability', async () => {
+      // arrange
+      mockPrismaService.employee.findMany.mockResolvedValue([
+        { id: 13, name: 'Марина', kpiScore: 91.0, isAvailable: true, workStart: '09:00', workEnd: '18:00' },
+      ]);
+      mockPrismaService.employee.update.mockResolvedValue({
+        id: 13, name: 'Марина', isAvailable: false,
+      });
+
+      // act — первый запрос (заполнил кэш)
+      await service.getAvailableEmployees();
+      // обновление доступности (инвалидация)
+      await service.updateAvailability(13, false);
+      // второй запрос (кэш инвалидирован, должен пойти в БД)
+      await service.getAvailableEmployees();
+
+      // assert — Prisma called twice (initial + after cache invalidation)
+      expect(mockPrismaService.employee.findMany).toHaveBeenCalledTimes(2);
+    });
   });
 
   describe('getPersonalManager', () => {

@@ -29,7 +29,10 @@
       "Bash(git config *)",
       "Bash(npm test *)",
       "WebFetch(docs.n8n.io)",
-      "Bash(cat *)"
+      "Bash(cat *)",
+      "Bash(select *)",
+      "Bash(eof)",
+      "Bash(jq *)"
     ]
   },
   "mcpServers": {

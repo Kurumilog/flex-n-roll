@@ -39,13 +39,24 @@ export interface EmployeeKpiResult {
 export class EmployeesService {
   private readonly logger = new Logger(EmployeesService.name);
 
+  // In-memory кэш для getAvailableEmployees (TTL 60с)
+  private availableCache: AvailableEmployee[] | null = null;
+  private cacheTimestamp = 0;
+  private readonly CACHE_TTL_MS = 60_000;
+
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Получить список доступных менеджеров, отсортированных по KPI (по убыванию)
+   * Получить список доступых менеджеров, отсортированных по KPI (по убыванию)
    * Фильтрует по isAvailable И по рабочему времени (workStart-workEnd)
+   * Использует in-memory кэш с TTL 60с для снижения нагрузки на БД.
    */
   async getAvailableEmployees(): Promise<AvailableEmployee[]> {
+    const now = Date.now();
+    if (this.availableCache && (now - this.cacheTimestamp) < this.CACHE_TTL_MS) {
+      return this.availableCache;
+    }
+
     const employees = await this.prisma.employee.findMany({
       where: { isAvailable: true },
       orderBy: { kpiScore: 'desc' },
@@ -62,8 +73,7 @@ export class EmployeesService {
       },
     });
 
-    const now = new Date();
-    const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+    const currentTime = `${new Date().getHours().toString().padStart(2, '0')}:${new Date().getMinutes().toString().padStart(2, '0')}`;
 
     // Фильтр по рабочим часам
     const availableEmployees = employees
@@ -72,6 +82,9 @@ export class EmployeesService {
         ...emp,
         isPersonalManager: false,
       }));
+
+    this.availableCache = availableEmployees;
+    this.cacheTimestamp = now;
 
     return availableEmployees;
   }
@@ -195,6 +208,10 @@ export class EmployeesService {
           isAvailable: true,
         },
       });
+
+      // Инвалидируем кэш
+      this.availableCache = null;
+      this.cacheTimestamp = 0;
 
       this.logger.log(
         `Employee ${employee.name} availability updated to ${isAvailable}`,

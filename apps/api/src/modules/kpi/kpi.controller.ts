@@ -96,4 +96,47 @@ export class KpiController {
       data: { current, history },
     };
   }
+
+  @Get(':id/history')
+  @ApiOperation({
+    summary: 'История KPI сотрудника за 30 дней (для sparkline)',
+    description:
+      'Возвращает ежедневные снимки KPI за последние 30 дней для построения графика тренда.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Bitrix24 ID сотрудника',
+    example: 13,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'История KPI',
+    schema: {
+      example: {
+        success: true,
+        data: [
+          { period: '2026-03-11T00:00:00Z', kpiScore: 72.0, dealsWon: 5, dealsLost: 2 },
+          { period: '2026-03-12T00:00:00Z', kpiScore: 73.5, dealsWon: 5, dealsLost: 2 },
+        ],
+      },
+    },
+  })
+  async getEmployeeKpiHistory(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{
+    success: boolean;
+    data: Array<{
+      period: Date;
+      kpiScore: number;
+      dealsWon: number;
+      dealsLost: number;
+    }>;
+  }> {
+    const history = await this.kpiService.getKpiHistory(id);
+
+    return {
+      success: true,
+      data: history,
+    };
+  }
 }

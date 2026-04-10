@@ -15,28 +15,29 @@
 - Skill включается автоматически, если задача явно совпадает с его назначением
 - Для критичных задач лучше вызывать skill явно в конце промта, чтобы поведение было предсказуемо
 
-## 2. Стек проекта
+## 2. Стек проекта (актуально на 2026-04-10)
 
-**Backend**: NestJS 10 + Prisma + PostgreSQL (Supabase)
-**API**: Swagger документация на `http://localhost:3000/api/docs`
-**Тесты**: 282 unit tests, 16 e2e tests
-**LLM**: Ollama qwen2.5:14b-instruct (через Tailscale)
+**Backend**: NestJS 10 + Prisma + PostgreSQL (Supabase) — порт 3001
+**Dashboard**: React + Vite + TailwindCSS (iframe для Bitrix24)
+**n8n**: 6 воркфлоу (Routing, KPI, Sync, Mailing, Transfer, AI Analysis)
+**LLM**: Ollama qwen2.5:14b (MacBook M4 через Tailscale)
+**Bitrix24**: Webhook + OAuth приложение (Client ID: `local.69d869d2c008b9.92913433`)
+**Тесты**: 344 unit tests, 27 test suites
+**DB**: 215 лидов в LeadCache, 23 сотрудника
 
 ## 3. Команды разработки
 
 ```bash
 pnpm install              # установка зависимостей
-pnpm --filter api dev     # запуск API
-pnpm --filter api build   # сборка API
-pnpm --filter api test    # 282 теста
-pnpm --filter api typecheck  # проверка типов
-pnpm dev                  # весь монорепо
+cd apps/api && pnpm build # сборка API
+npx dotenv-cli -e .env.local -- node dist/main.js  # запуск API
+pnpm --filter api test    # 344 теста
+npx tsc --noEmit -p apps/api/tsconfig.json  # проверка типов
 ```
 
 ## 4. Проверочный список перед коммитом
 
-- [ ] TypeScript errors: `pnpm --filter api typecheck`
-- [ ] API запускается: `pnpm --filter api dev`
-- [ ] Swagger доступен: `http://localhost:3000/api/docs`
+- [ ] TypeScript errors: `npx tsc --noEmit -p apps/api/tsconfig.json`
+- [ ] API запускается и health отвечает: `curl http://localhost:3001/api/health`
 - [ ] Тесты проходят: `pnpm --filter api test`
-- [ ] URL новых эндпоинтов записан в openapi.yaml
+- [ ] URL новых эндпоинтов записан в README.md

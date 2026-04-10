@@ -20,7 +20,7 @@ async function bootstrap() {
   app.setGlobalPrefix("api");
   app.use(cookieParser());
   app.enableCors({
-    origin: configService.get<string>('FRONTEND_ORIGIN')?.split(',') || ['http://localhost:3000'],
+    origin: true, // Allow all origins for the hackathon
     credentials: true,
   });
   app.useGlobalPipes(

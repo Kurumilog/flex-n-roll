@@ -1,6 +1,3 @@
-// FlexRouter AI — Prisma Schema
-// https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,45 +7,41 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================================
-// Employees — менеджеры компании
-// ============================================================
 model Employee {
-  id                  Int       @id              // bitrix24 ID (из employees.json)
-  name                String
-  lastName            String    @map("last_name")
-  email               String    @unique
-  phone               String?
-  position            String?
-  department          String?
-  kpiScore            Float     @default(50.0)  @map("kpi_score")  // 0–100
-  dealsWon            Int       @default(0)     @map("deals_won")
-  dealsLost           Int       @default(0)     @map("deals_lost")
-  avgResponseMinutes  Float     @default(0)     @map("avg_response_minutes")
-  isAvailable         Boolean   @default(true)  @map("is_available")
-  workStart           String    @default("09:00") @map("work_start") // HH:mm
-  workEnd             String    @default("18:00") @map("work_end")
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt      @map("updated_at")
-
-  assignments         Assignment[]
-  kpiHistory          KpiHistory[]
-  mailings            Mailing[]
+  id                 Int                @id
+  name               String
+  lastName           String             @map("last_name")
+  email              String             @unique
+  phone              String?
+  position           String?
+  department         String?
+  kpiScore           Float              @default(50.0) @map("kpi_score")
+  dealsWon           Int                @default(0) @map("deals_won")
+  dealsLost          Int                @default(0) @map("deals_lost")
+  avgResponseMinutes Float              @default(0) @map("avg_response_minutes")
+  isAvailable        Boolean            @default(true) @map("is_available")
+  workStart          String             @default("09:00") @map("work_start")
+  workEnd            String             @default("18:00") @map("work_end")
+  createdAt          DateTime           @default(now()) @map("created_at")
+  updatedAt          DateTime           @updatedAt @map("updated_at")
+  assignments        Assignment[]
+  deliveryTrackings  DeliveryTracking[]
+  kpiHistory         KpiHistory[]
+  mailings           Mailing[]
 
   @@map("employees")
 }
 
-// "Личный менеджер" — кто работал с этим клиентом
 model Assignment {
-  id               Int       @id @default(autoincrement())
-  clientPhone      String?   @map("client_phone")
-  clientEmail      String?   @map("client_email")
-  clientBitrixId   String?   @map("client_bitrix_id")  // ID контакта в Bitrix24
-  employeeId       Int       @map("employee_id")
-  employee         Employee  @relation(fields: [employeeId], references: [id])
-  interactionCount Int       @default(1)    @map("interaction_count")
-  lastInteraction  DateTime  @default(now()) @map("last_interaction")
-  createdAt        DateTime  @default(now()) @map("created_at")
+  id               Int      @id @default(autoincrement())
+  clientPhone      String?  @map("client_phone")
+  clientEmail      String?  @map("client_email")
+  clientBitrixId   String?  @map("client_bitrix_id")
+  employeeId       Int      @map("employee_id")
+  interactionCount Int      @default(1) @map("interaction_count")
+  lastInteraction  DateTime @default(now()) @map("last_interaction")
+  createdAt        DateTime @default(now()) @map("created_at")
+  employee         Employee @relation(fields: [employeeId], references: [id])
 
   @@index([clientPhone])
   @@index([clientEmail])
@@ -57,23 +50,22 @@ model Assignment {
 }
 
 model KpiHistory {
-  id                    Int       @id @default(autoincrement())
-  employeeId            Int       @map("employee_id")
-  employee              Employee  @relation(fields: [employeeId], references: [id])
-  period                DateTime  // дата snapshot'а (начало дня)
-  dealsWon              Int       @map("deals_won")
-  dealsLost             Int       @map("deals_lost")
-  avgResponseMinutes    Float     @map("avg_response_minutes")
-  kpiScore              Float     @map("kpi_score")
-  createdAt             DateTime  @default(now()) @map("created_at")
+  id                 Int      @id @default(autoincrement())
+  employeeId         Int      @map("employee_id")
+  period             DateTime
+  dealsWon           Int      @map("deals_won")
+  dealsLost          Int      @map("deals_lost")
+  avgResponseMinutes Float    @map("avg_response_minutes")
+  kpiScore           Float    @map("kpi_score")
+  createdAt          DateTime @default(now()) @map("created_at")
+  employee           Employee @relation(fields: [employeeId], references: [id])
 
   @@index([employeeId, period])
   @@map("kpi_history")
 }
 
-// Кэш лидов из Bitrix24 (синхронизируется ежечасно)
 model LeadCache {
-  bitrixId     String    @id   @map("bitrix_id")
+  bitrixId     String    @id @map("bitrix_id")
   title        String
   statusId     String    @map("status_id")
   sourceId     String?   @map("source_id")
@@ -88,39 +80,38 @@ model LeadCache {
   dateModify   DateTime? @map("date_modify")
   dateClosed   DateTime? @map("date_closed")
   createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt      @map("updated_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 
   @@map("leads_cache")
 }
 
 model Mailing {
-  id                Int       @id @default(autoincrement())
-  leadBitrixId      String?   @map("lead_bitrix_id")
-  clientEmail       String?   @map("client_email")
-  clientPhone       String?   @map("client_phone")
-  clientName        String?   @map("client_name")
-  channel           String    // 'email' | 'telegram' | 'whatsapp'
-  subject           String?
-  messageText       String    @map("message_text")
-  generatedBy       String    @default("llm")  @map("generated_by")  // 'llm' | 'template'
-  employeeId        Int?      @map("employee_id")
-  employee          Employee? @relation(fields: [employeeId], references: [id])
-  status            String    @default("pending")  // pending | sent | failed
-  responseReceived  Boolean   @default(false)      @map("response_received")
-  sentAt            DateTime? @map("sent_at")
-  createdAt         DateTime  @default(now())      @map("created_at")
+  id               Int       @id @default(autoincrement())
+  leadBitrixId     String?   @map("lead_bitrix_id")
+  clientEmail      String?   @map("client_email")
+  clientPhone      String?   @map("client_phone")
+  clientName       String?   @map("client_name")
+  channel          String
+  subject          String?
+  messageText      String    @map("message_text")
+  generatedBy      String    @default("llm") @map("generated_by")
+  employeeId       Int?      @map("employee_id")
+  status           String    @default("pending")
+  responseReceived Boolean   @default(false) @map("response_received")
+  sentAt           DateTime? @map("sent_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  employee         Employee? @relation(fields: [employeeId], references: [id])
 
   @@index([status])
   @@index([clientEmail])
   @@map("mailings")
 }
 
-// Входящие события от n8n (лог + дедупликация)
 model IncomingEvent {
   id            Int      @id @default(autoincrement())
-  eventId       String   @unique @map("event_id")  // идентификатор из Bitrix24
-  eventType     String   @map("event_type")         // ONOPENLINEMESSAGEADD, ONCRMLEADADD...
-  channel       String            // telegram | email | whatsapp
+  eventId       String   @unique @map("event_id")
+  eventType     String   @map("event_type")
+  channel       String
   clientText    String   @map("client_text")
   clientPhone   String?  @map("client_phone")
   clientEmail   String?  @map("client_email")
@@ -131,4 +122,22 @@ model IncomingEvent {
   processedAt   DateTime @default(now()) @map("processed_at")
 
   @@map("incoming_events")
+}
+
+model DeliveryTracking {
+  id             Int       @id @default(autoincrement())
+  trackingNumber String    @unique @map("tracking_number")
+  clientPhone    String?   @map("client_phone")
+  clientEmail    String?   @map("client_email")
+  managerId      Int?      @map("manager_id")
+  fromLocation   String    @map("from_location")
+  toLocation     String    @map("to_location")
+  currentStatus  String    @map("current_status")
+  expectedDate   DateTime? @map("expected_date")
+  timelineEvents Json      @map("timeline_events")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  employee       Employee? @relation(fields: [managerId], references: [id])
+
+  @@map("delivery_trackings")
 }

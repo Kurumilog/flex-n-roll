@@ -28,6 +28,7 @@ export class SyncService {
     this.logger.log('Starting leads sync from Bitrix24...');
 
     try {
+      this.logger.log('Calling bitrixService.getLeads()...');
       // Получить все лиды из Bitrix24
       const bitrixLeads = await this.bitrixService.getLeads({
         filter: {},
@@ -56,6 +57,8 @@ export class SyncService {
       let syncedCount = 0;
       for (const lead of bitrixLeads) {
         try {
+          // Bitrix24 возвращает ASSIGNED_BY_ID как строку, но Prisma ожидает Int
+          const assignedById = lead.ASSIGNED_BY_ID ? parseInt(lead.ASSIGNED_BY_ID, 10) : null;
           await this.prisma.leadCache.upsert({
             where: { bitrixId: lead.ID.toString() },
             create: {
@@ -63,7 +66,7 @@ export class SyncService {
               title: lead.TITLE,
               statusId: lead.STATUS_ID,
               sourceId: lead.SOURCE_ID,
-              assignedById: lead.ASSIGNED_BY_ID,
+              assignedById,
               opportunity: parseFloat(lead.OPPORTUNITY ?? '0'),
               currencyId: lead.CURRENCY_ID ?? 'BYN',
               clientName: lead.NAME && lead.LAST_NAME
@@ -80,7 +83,7 @@ export class SyncService {
               title: lead.TITLE,
               statusId: lead.STATUS_ID,
               sourceId: lead.SOURCE_ID,
-              assignedById: lead.ASSIGNED_BY_ID,
+              assignedById,
               opportunity: parseFloat(lead.OPPORTUNITY ?? '0'),
               currencyId: lead.CURRENCY_ID ?? 'BYN',
               clientName: lead.NAME && lead.LAST_NAME

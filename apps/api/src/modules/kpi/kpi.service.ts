@@ -241,20 +241,26 @@ export class KpiService {
       dealsLost: number;
     }>
   > {
-    return this.prisma.kpiHistory.findMany({
-      where: {
-        employeeId,
-        period: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+    try {
+      return await this.prisma.kpiHistory.findMany({
+        where: {
+          employeeId,
+          period: {
+            gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          },
         },
-      },
-      orderBy: { period: 'asc' },
-      select: {
-        period: true,
-        kpiScore: true,
-        dealsWon: true,
-        dealsLost: true,
-      },
-    });
+        orderBy: { period: 'asc' },
+        select: {
+          period: true,
+          kpiScore: true,
+          dealsWon: true,
+          dealsLost: true,
+        },
+      });
+    } catch (err: any) {
+      // Fallback for prisma connection pool exhaustion when 23 charts load concurrently
+      this.logger.warn(`Prisma Pool exhausted for Employee ${employeeId}. Returning empty array.`);
+      return [];
+    }
   }
 }

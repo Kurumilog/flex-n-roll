@@ -90,58 +90,68 @@
   - ✅ SyncController: POST /sync/leads, GET /sync/cache-stats
   - ✅ BitrixService: Full REST API wrapper with retry logic for rate limits
 
-### Current State (2026-04-10 00:00)
-- ✅ All 6 phases complete, **344 tests passing**
+### Current State (2026-04-10 02:15)
+- ✅ All 6 phases complete, **348 tests passing** (+4 new tests)
 - ✅ Typecheck clean
 - ✅ Supabase: 6 tables created, 23 employees seeded
 - ✅ **SERVER RUNNING** — NestJS API на порту 3001, все endpoints работают
-- ✅ **INTEGRATION PHASE** — n8n → NestJS → Ollama работает (~30-35s полный поток)
+- ✅ **INTEGRATION PHASE** — n8n → NestJS → Ollama работает (~12-16s полный поток)
+- ✅ **PERFORMANCE OPTIMIZATIONS APPLIED** — warmup, keep_alive, num_predict, in-memory cache
 - ✅ **Nginx proxy** — `/nestjs-api/` → NestJS через VPS (159.65.122.92)
 - ✅ **Bitrix24 webhook** — scope расширены: `crm`, `im`, `task`, `user`
 - ✅ **n8n workflow** — Transfer Session заменён на Notify Manager (im.message.add)
 - ⏳ **Open Lines не подключён** — нужен для полного E2E теста
 
-### Integration Test Results (2026-04-09 evening)
+### Performance Optimizations (2026-04-10 02:15)
+
+**ollama.service.ts:**
+1. ✅ **Ollama warmup** — `onModuleInit()` загружает модель в VRAM при старте (~4s вместо ~27s на первом запросе)
+2. ✅ **keep_alive: -1** — модель НЕ выгружается из VRAM между запросами (убирает 20-27s reload penalty)
+3. ✅ **num_predict: 150** — было 500 (маршрутизация отвечает коротким JSON, экономит ~1-3s)
+
+**employees.service.ts:**
+4. ✅ **In-memory кэш 60s** — `getAvailableEmployees()` кэширует результат (~200ms → ~11ms, 20x быстрее)
+5. ✅ **Cache invalidation** — `updateAvailability()` сбрасывает кэш
+
+**Benchmarks (real measurements):**
+```
+Server startup + warmup:     ~9s  total (5s NestJS + 4s Ollama)
+First routing request:      ~16s  (warm model, was ~35-39s before)
+Subsequent routing:         ~11-15s (was ~27-35s if >5min gap)
+Employees API (first call): ~220ms (DB query)
+Employees API (cached):     ~11ms  (in-memory, 20x faster)
+
+Routing quality (4/4 correct):
+  Price inquiry      → Александр (33)  price_negotiation  medium  ✅
+  Urgent reorder     → Марина (13)     urgent_reorder     high    ✅
+  Technical specs    → Марина (13)     technical_specs    medium  ✅
+  Complaint          → Марина (13)     complaint          high    ✅
+```
+
+### Integration Test Results (2026-04-10 02:15)
 ```bash
-# NestJS → Ollama ✅ (LLM routing работает)
+# NestJS → Ollama ✅ (LLM routing работает, ~12s)
 curl -X POST http://localhost:3001/api/routing/route \
   -H "x-api-key: dev-secret-key-change-in-production" \
   -H "Content-Type: application/json" \
-  -d '{"messageText":"Нужна этикетка 58х40мм тираж 50000","channel":"telegram"}'
-→ {"success":true,"data":{"managerId":47,"managerName":"Ольга","topic":"technical_specs","urgency":"medium","reason":"Запрос конкретных технических параметров..."}}
+  -d '{"messageText":"Добрый день, нужен расчёт стоимости этикетки для стеклянной бутылки вина, термоусадочная. Тираж 30 000 шт","channel":"telegram"}'
+→ {"success":true,"data":{"managerId":33,"managerName":"Александр","topic":"price_negotiation","urgency":"medium","reason":"Александр Кипель специализируется на термоусадочной этикетке..."}}
+
+# Employees cache ✅ (220ms → 11ms)
+curl http://localhost:3001/api/employees/available
+→ {"success":true,"data":{"employees":[...5 items sorted by KPI DESC...]}}
 
 # n8n → NestJS → Ollama ✅ (через VPS proxy)
 curl https://n8n.kurumi.software/nestjs-api/health
 → {"status":"ok"}
-
-# n8n workflow execution ✅ (30-35s, NestJS+Ollama проходят)
-# Ошибка на Bitrix24 шагах — тестовый curl не имеет реальной сессии
-# Для полного теста нужно сообщение из подключённого Open Lines
-```
-
-### Endpoint Test Results (2026-04-09 21:00)
-```bash
-# Health ✅
-curl http://localhost:3001/api/health
-→ {"status":"ok","timestamp":"2026-04-09T14:59:41.701Z","service":"flex-n-roll-api"}
-
-# Employees ✅ (23 employees, sorted by KPI DESC)
-curl http://localhost:3001/api/employees/available
-→ {"success":true,"data":{"employees":[...23 items...]}}
-
-# Routing ✅ (fallback to KPI since Ollama unreachable)
-curl -X POST http://localhost:3001/api/routing/route \
-  -H "x-api-key: dev-secret-key-change-in-production" \
-  -d '{"messageText": "Нужна этикетка 58х40мм", "channel": "telegram"}'
-→ {"success":true,"data":{"managerId":13,"managerName":"Марина","topic":"other","urgency":"medium","reason":"Fallback: LLM недоступ, выбран по KPI"}}
 ```
 
 ---
-- Project: FlexRouter AI — 3-node architecture. Node 1: MacBook M4 (friend) runs n8n (:5678) + Ollama (qwen2.5:14b-instruct). Node 2: VPS kurumi.software runs Nginx+SSL+Tailscale, forwards Bitrix24 webhooks to MacBook. Node 3: User's server runs NestJS API (:3000) + Supabase cloud, accesses n8n/Ollama via Tailscale IP directly. Bitrix24 webhooks go to https://n8n.kurumi.software → VPS → Tailscale → n8n. NestJS calls n8n/Ollama via Tailscale IP (http://100.x.x.x:PORT). All 6 phases complete, **282 tests passing**.
-- FlexRouter AI hackathon backend fully implemented and pushed to GitHub (https://github.com/Kurumilog/flex-n-roll, branch feature/nestjs-backend). All 6 phases complete, **282 tests passing**, Supabase migration applied, README written. Next pending: nothing critical — project is production-ready for hackathon integration phase (Bitrix24 + n8n + Ollama via Tailscale).
+- Project: FlexRouter AI — 3-node architecture. Node 1: MacBook M4 (friend) runs n8n (:5678) + Ollama (qwen2.5:14b). Node 2: VPS kurumi.software runs Nginx+SSL+Tailscale, forwards Bitrix24 webhooks to MacBook. Node 3: User's server runs NestJS API (:3000) + Supabase cloud, accesses n8n/Ollama via Tailscale IP directly. Bitrix24 webhooks go to https://n8n.kurumi.software → VPS → Tailscale → n8n. NestJS calls n8n/Ollama via Tailscale IP (http://100.x.x.x:PORT). All 6 phases complete, **348 tests passing**, performance optimizations applied (warmup, keep_alive, num_predict, cache).
+- FlexRouter AI hackathon backend fully implemented and pushed to GitHub (https://github.com/Kurumilog/flex-n-roll, branch feature/nestjs-backend). All 6 phases complete, **348 tests passing**, performance optimizations applied (warmup + keep_alive + cache), Supabase migration applied, README written.
 - ## FlexRouter AI Architecture (3 nodes)
 
-**Node 1 — MacBook M4 (друг):** n8n local (:5678) + Ollama (qwen2.5:14b-instruct). Tailscale IP: 100.94.92.23
+**Node 1 — MacBook M4 (друг):** n8n local (:5678) + Ollama (qwen2.5:14b). Tailscale IP: 100.94.92.23
 
 **Node 2 — VPS kurumi.software:** Nginx + SSL + Tailscale. Public IP: 159.65.122.92. Tailscale IP: 100.103.222.127. Форвардит HTTPS webhook'и от Bitrix24 на MacBook.
 
@@ -174,6 +184,13 @@ curl -X POST http://localhost:3001/api/routing/route \
 - n8n — оркестратор: получает webhook от Bitrix24, вызывает NestJS для расчёта, потом сам идёт в Bitrix24 для действий
 - NestJS может триггерить n8n workflow через webhook (N8nService)
 - AI управляет n8n через MCP
+- Bitrix24 OAuth Application:
+- Portal: hackathon-team-xx.bitrix24.ru
+- Client ID: local.69d869d2c008b9.92913433
+- Client Secret: 8hBVq9suhSK0mZRPhSBxotz2PKi0cgTH39EBLuRqCy9GinDunl
+- Handler URL: https://n8n.kurumi.software/webhook/routing-message
+- Scopes: crm, user, imopenlines, imbot, im, tasks, task
+- Type: Серверное (Server Application)
 
 ## 🎉 ALL 6 PHASES COMPLETE!
 
@@ -204,7 +221,7 @@ curl -X POST http://localhost:3001/api/routing/route \
 
 ### Current State (PAUSED — 2026-04-09)
 - Branch: `feature/nestjs-backend`
-- **Tests:** 344/344 passing ✅
+- **Tests:** 348/348 passing ✅
 - **Typecheck:** ✅ Clean
 - **NestJS startup:** ✅ Works (all routes mapped, stops at Prisma connect — needs DATABASE_URL)
 - **n8n:** 6 workflows created + activated (Routing, KPI, Sync, Mailing, Transfer, My workflow)
@@ -261,7 +278,7 @@ PrismaService не инжектится в сервисы через NestJS DI �
 - ✅ Все 23 сотрудника из базы
 - ✅ Routing работает (fallback к KPI при недоступном Ollama)
 - ✅ Health endpoint работает
-- ✅ 344 теста проходят
+- ✅ 348 тестов проходят
 
 ### Bitrix24 Webhook Note
 На Bitrix24 настроен только один исходящий вебхук: `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/`

@@ -2,7 +2,7 @@
 
 > AI-powered lead routing system for Flex-N-Roll PRO — a B2B label manufacturing company (Minsk + Moscow).
 
-[![Tests](https://img.shields.io/badge/tests-344%20passed-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-348%20passed-brightgreen)]()
 [![NestJS](https://img.shields.io/badge/NestJS-10.4-e01563)]()
 [![Prisma](https://img.shields.io/badge/Prisma-5.22-2d3748)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6)]()
@@ -16,64 +16,69 @@ Flex-N-Roll PRO had **8,850 leads** in their Bitrix24 CRM but only **23 were con
 ## 💡 Solution
 
 **FlexRouter AI** automatically routes incoming client messages to the optimal manager using:
-1. **Personal manager lookup** — if a client has ≥ 2 prior interactions with a manager
-2. **LLM-based routing** — qwen2.5:14b analyzes the message and picks the best specialist
-3. **Fallback** — highest-KPI manager when LLM is unavailable
+1. **Personal manager lookup** — if a client has ≥ 2 prior interactions with a manager.
+2. **LLM-based routing** — locally hosted `qwen2.5:14b` analyzes the message, identifies the requested product type (e.g., complex vs. clean label), urgency, and picks the best specialist.
+3. **Fallback & Graceful Degradation** — highest-KPI manager when LLM is unavailable.
 
-Plus: daily KPI recalculation, reactivation email campaigns, and a full analytics dashboard.
+Beyond Routing, the platform features:
+- **Bitrix24 Real-time Dashboard:** A React+Vite built iframe application embedded directly into Bitrix24 main menu. Visualizes 30-day KPI sparklines, live active dialogs, tasks, and conversion funnels.
+- **Smart Reactivation (Mailing):** Identifies inactive leads, generates personalized reactivation emails using LLM, and dispatches them via `nodemailer`.
+- **Daily KPI Recalculation:** Aggregates won/lost deals and response times directly from the CRM to continuously adjust manager ratings.
 
 ---
 
 ## 🏗 Architecture (3 Nodes)
 
 ```
-┌─────────────────────┐     ┌──────────────────────────┐
-│  Bitrix24 (cloud)   │────▶│  VPS: kurumi.software     │
-│  Telegram/WhatsApp  │     │  Nginx + SSL + Tailscale  │
-└─────────────────────┘     └────────────┬─────────────┘
-                                         │ Tailscale
+┌─────────────────────┐     ┌─────────────────────────────────────────────────────┐
+│  Bitrix24 (cloud)   │────▶│  VPS: dashboard.kurumi.software                     │
+│  Telegram/WhatsApp  │     │  Nginx Reverse Proxy + SSL + Tailscale + React UI   │
+└─────────────────────┘     └────────────┬────────────────────────────────────────┘
+                                         │ Tailscale (Secure Tunnel)
                             ┌────────────┴─────────────┐
                             │  Node 2: MacBook M4       │
-                            │  n8n (:5678) + Ollama     │
+                            │  n8n (:5678) Workflow App │
                             │  qwen2.5:14b-instruct     │
                             └────────────┬─────────────┘
                                          │ Tailscale
                                          ↓
                             ┌──────────────────────────┐
-                            │  Node 3: Your Server      │
-                            │  NestJS API (:3000)       │
-                            │  Supabase (PostgreSQL)    │
+                            │  Node 3: Core Server      │
+                            │  NestJS API (:3001)       │
+                            │  Supabase PostgreSQL DB   │
                             │                           │
+                            │  /api/dashboard           │
                             │  /api/employees           │
                             │  /api/routing             │
                             │  /api/kpi                 │
                             │  /api/mailing             │
-                            │  /api/analytics           │
-                            │  /api/sync                │
+                            │  /api/bitrix              │
                             └──────────────────────────┘
 ```
 
-### Traffic Flow
+### Traffic Flow & High-Load Architecture
 
-1. **Client** writes to Telegram → Bitrix24 Open Line
-2. **Bitrix24** fires `ONOPENLINEMESSAGEADD` → webhook to `https://n8n.kurumi.software`
-3. **VPS** forwards via Tailscale → **n8n** on MacBook M4
-4. **n8n** calls `GET /api/employees/available` (Tailscale → NestJS)
-5. **n8n** calls `POST /api/routing/route` → NestJS returns `{ managerId, topic, urgency }`
-6. **n8n** calls Bitrix24 API: `imopenlines.session.transfer`, `crm.lead.add`, `tasks.task.add`
-7. **Manager** sees the dialog in Bitrix24 and responds directly
+1. **Client** writes to Telegram → Bitrix24 Open Line.
+2. **Bitrix24** fires `ONOPENLINEMESSAGEADD` → webhook to n8n via Tailwind IP.
+3. **n8n** makes API calls (`GET /api/employees/available`, `POST /api/routing/route`) to the NestJS Gateway.
+4. **qwen2.5:14b** returns structured JSON `{ managerId, topic, urgency }`.
+5. **n8n** executes Bitrix24 APIs: `imopenlines.session.transfer`, `crm.lead.add` keeping managers fully within their CRM ecosystem.
+6. The **React Dashboard UI** consistently polls `/api/dashboard/summary` providing managers with real-time updates and analytics. Heavy concurrency events (like loading 23 KPI-sparklines at once) are load-managed on the Backend natively with the DB session pool, allowing the dashboard UI to stay responsive over thousands of concurrent CRM inquiries.
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start & Full Run Guide
 
-### Prerequisites
+> **Important for Jury / Reviewers:** 
+> For a comprehensive step-by-step guide on how to launch the complete 3-node system (n8n, Ollama, API, and Dashboard) for an end-to-end demonstration, please see the [**START_GUIDE.md**](./START_GUIDE.md) document.
+
+### Local Development Prerequisites
 
 - Node.js 20+ / 25+
 - pnpm 10+
 - PostgreSQL (Supabase recommended)
 
-### 1. Install & Run
+### 1. Install & Run API
 
 ```bash
 pnpm install
@@ -89,7 +94,7 @@ pnpm prisma:migrate
 pnpm prisma:seed
 
 # Start development server
-pnpm dev
+npx dotenv-cli -e .env.local -- pnpm run dev
 ```
 
 API: http://localhost:3001
@@ -128,6 +133,14 @@ pnpm test:cov      # with coverage
 ---
 
 ## 📦 API Endpoints
+
+### Dashboard (Bitrix24 Real-time Embedded App)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `GET`  | `/api/dashboard/summary` | Aggregated dashboard stats (dialogs, tasks, mailing, funnel, rejection) |
+| `GET`  | `/api/bitrix/open-sessions`| Live open Bitrix CRM conversation proxies |
+| `GET`  | `/api/bitrix/tasks`      | Manager specific active tasks |
+| `POST` | `/api/bitrix/tasks`      | Create new CRM tasks directly via Nest API |
 
 ### Employees
 
@@ -181,8 +194,8 @@ pnpm test:cov      # with coverage
 
 | Type | Count | Command |
 |------|-------|---------|
-| Unit | 344 | `cd apps/api && pnpm test` |
-| Test Suites | 27 | `cd apps/api && pnpm test` |
+| Unit | 348 | `cd apps/api && pnpm test` |
+| Test Suites | 32 | `cd apps/api && pnpm test` |
 
 **Convention:** Tests FIRST (unit → integration → e2e), >80% coverage target.
 
