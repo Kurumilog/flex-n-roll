@@ -259,8 +259,22 @@ curl -s -X GET "https://n8n.kurumi.software/api/v1/workflows/{id}" \
 - **Header:** `x-api-key: <API_SECRET_KEY>`
 
 ### Bitrix24 Access
-- **Webhook:** `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt`
-- **Methods:** crm.lead.get, crm.timeline.item.ad, imopenlines.session.transfer, и т.д.
+- **Webhook (deprecated):** `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt`
+- **OAuth Credential:** `Bitrix24 OAuth (hackathon-team-xx)` — ID: `7NqOd5ODFj6VHx2O`
+  - Тип: `oAuth2Api` (n8n generic credential)
+  - Grant Type: `authorizationCode`
+  - Portal: `https://b24-p0ujtw.bitrix24.ru`
+  - Client ID: `local.69d869d2c008b9.92913433`
+  - Scope: `crm im task imopenlines imbot tasks user`
+  - **Auto-refresh:** n8n автоматически обновляет access_token через refresh_token при 401
+  - **Все 6 Bitrix24 HTTP Request нод** используют эту credential (не статический токен)
+- **URL формат нод:** `https://b24-p0ujtw.bitrix24.ru/rest/{method}` (без `?auth=` — credential добавляет автоматически)
+
+#### ⚠️ n8n PUT Workflow API Caveats
+- **PUT body accepts ONLY:** `name`, `nodes`, `connections`, `settings`
+- **Settings schema is strict:** only `executionOrder` is allowed. Fields like `binaryMode`, `callerPolicy`, `availableInMCP` cause `400 Bad Request`.
+- **Active workflows:** Can be updated via PUT, but may need deactivate → PUT → activate for changes to persist.
+- **Script:** `scripts/update-n8n-bitrix-oauth.js` — automated migration from webhook URL → OAuth for all 6 Bitrix24 nodes.
 
 ---
 

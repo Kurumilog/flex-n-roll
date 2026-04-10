@@ -1,0 +1,160 @@
+{
+  "name": "FlexRouter — Routing (fixed)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "routing-message-fixed",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [0, 0],
+      "id": "wf-webhook-001",
+      "name": "Webhook",
+      "webhookId": "routing-message-fixed"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json;\nconst data = body.data || body;\nconst connector = data.CONNECTOR || {};\nconst dialog = data.DIALOG || {};\nconst user = data.USER || {};\nconst messages = data.MESSAGES || [];\nconst msg = messages[0] || {};\n\nlet channel = 'telegram';\nconst cn = (connector.NAME || '').toLowerCase();\nif (cn.includes('whatsapp')) channel = 'whatsapp';\nelse if (cn.includes('viber')) channel = 'viber';\n\nreturn [{ json: {\n  messageText: msg.TEXT || msg.text || data.TEXT || data.text || 'No text',\n  sessionId: dialog.ID || data.DIALOG_ID || '',\n  dialogId: dialog.ID || data.DIALOG_ID || '',\n  eventId: data.ID || ('evt-' + Date.now()),\n  userId: user.ID || data.USER_ID || '',\n  channel: channel\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "id": "wf-extract-001",
+      "name": "Extract Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://n8n.kurumi.software/nestjs-api/routing/route",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "dev-secret-key-change-in-production" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"messageText\":\"{{ $json.messageText }}\",\"channel\":\"{{ $json.channel }}\",\"clientBitrixId\":\"{{ $json.sessionId }}\",\"eventId\":\"{{ $json.eventId }}\"}",
+        "options": { "timeout": 60000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [440, 0],
+      "id": "wf-nestjs-001",
+      "name": "NestJS Routing",
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "c1",
+              "leftValue": "={{ $json.data.managerId || $json.managerId }}",
+              "rightValue": null,
+              "operator": { "type": "object", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [660, 0],
+      "id": "wf-if-001",
+      "name": "IF Manager Found"
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "=https://b24-p0ujtw.bitrix24.ru/rest/im.message.add",
+        "sendBody": true,
+        "contentType": "application/json",
+        "specifyBody": "json",
+        "jsonBody": "={\"USER_ID\":\"{{ $json.data.managerId || $json.managerId }}\",\"MESSAGE\":\"📩 Новое: {{ $('Extract Data').item.json.messageText }} | Тема: {{ $json.data.topic || $json.topic }}\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [880, -160],
+      "id": "wf-notify-001",
+      "name": "Notify Manager",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": { "id": "7NqOd5ODFj6VHx2O", "name": "Bitrix24 OAuth (hackathon-team-xx)" }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "=https://b24-p0ujtw.bitrix24.ru/rest/tasks.task.add",
+        "sendBody": true,
+        "contentType": "application/json",
+        "specifyBody": "json",
+        "jsonBody": "={\"fields\":{\"TITLE\":\"Обработка ({{ $('Extract Data').item.json.channel }})\",\"RESPONSIBLE_ID\":\"{{ $json.data.managerId || $json.managerId }}\"}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [1100, -160],
+      "id": "wf-task-001",
+      "name": "Create Task",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": { "id": "7NqOd5ODFj6VHx2O", "name": "Bitrix24 OAuth (hackathon-team-xx)" }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "genericCredentialType",
+        "genericAuthType": "oAuth2Api",
+        "method": "POST",
+        "url": "=https://b24-p0ujtw.bitrix24.ru/rest/im.message.add",
+        "sendBody": true,
+        "contentType": "application/json",
+        "specifyBody": "json",
+        "jsonBody": "={\"DIALOG_ID\":\"{{ $('Extract Data').item.json.dialogId }}\",\"MESSAGE\":\"{{ $json.data.autoReplyText || $json.autoReplyText || 'Все специалисты заняты. Мы скоро ответим.' }}\",\"SYSTEM\":\"Y\"}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [880, 160],
+      "id": "wf-auto-001",
+      "name": "Auto Reply",
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "oAuth2Api": { "id": "7NqOd5ODFj6VHx2O", "name": "Bitrix24 OAuth (hackathon-team-xx)" }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1100, 160],
+      "id": "wf-merge-001",
+      "name": "Done"
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Extract Data", "type": "main", "index": 0 }]] },
+    "Extract Data": { "main": [[{ "node": "NestJS Routing", "type": "main", "index": 0 }]] },
+    "NestJS Routing": { "main": [[{ "node": "IF Manager Found", "type": "main", "index": 0 }]] },
+    "IF Manager Found": {
+      "main": [
+        [{ "node": "Auto Reply", "type": "main", "index": 0 }],
+        [{ "node": "Notify Manager", "type": "main", "index": 0 }]
+      ]
+    },
+    "Notify Manager": { "main": [[{ "node": "Create Task", "type": "main", "index": 0 }]] },
+    "Create Task": { "main": [[{ "node": "Done", "type": "main", "index": 0 }]] },
+    "Auto Reply": { "main": [[{ "node": "Done", "type": "main", "index": 0 }]] }
+  },
+  "settings": { "executionOrder": "v1" }
+}

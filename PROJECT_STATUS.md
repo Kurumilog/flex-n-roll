@@ -4,9 +4,9 @@
 
 **Ветка**: `feature/nestjs-backend`
 
-**Последнее обновление**: 2026-04-10 07:05
+**Последнее обновление**: 2026-04-10 08:35
 
-**Статус**: ✅ **n8n WORKFLOWS FIXED** — все 6 воркфлоу работают на порту 3001, sync загружает 215 лидов, routing через Ollama функционирует
+**Статус**: ✅ **BACKEND RUNNING** — NestJS API на порту 3001, routing через Ollama работает, n8n OAuth credential с auto-refresh, Transfer Inactive деактивирован
 
 ---
 
@@ -14,12 +14,35 @@
 
 | Workflow | ID | Было | Стало | Статус |
 |----------|-----|------|-------|--------|
-| **Routing** | `iHnbF3T4HFjEgzY4` | ✅ уже правильный (через VPS proxy) | без изменений | ✅ |
-| **KPI Recalculate** | `587Eqkykn6Rd8ujH` | `:3000/api/kpi/recalculate` | `:3001/api/kpi/recalculate` | ✅ Исправлен |
-| **Mailing** | `fSgTAkO0ddlXwns9` | `:3000/api/mailing/*` | `:3001/api/mailing/*` | ✅ Исправлен |
-| **Leads Sync** | `blVnCIqe4hyFrtvb` | `:3000/api/sync/leads` | `:3001/api/sync/leads` | ✅ Исправлен |
-| **Transfer Inactive** | `Esa9RuyUEMchzlf0` | `:3000/api/employees/available` | `:3001/api/employees/available` | ✅ Исправлен |
-| **AI Lead Analysis** | `cTp3tAVjyWmqHY2i` | Groq, не относится | без изменений | — |
+| **Routing** | `iHnbF3T4HFjEgzY4` | ✅ уже правильный (через VPS proxy) | OAuth credential | ✅ |
+| **KPI Recalculate** | `587Eqkykn6Rd8ujH` | `:3000/api/kpi/recalculate` | `:3001/api/kpi/recalculate` | ✅ |
+| **Mailing** | `fSgTAkO0ddlXwns9` | `:3000/api/mailing/*` | `:3001/api/mailing/*` | ✅ |
+| **Leads Sync** | `blVnCIqe4hyFrtvb` | `:3000/api/sync/leads` | `:3001/api/sync/leads` | ✅ |
+| **Transfer Inactive** | `Esa9RuyUEMchzlf0` | `:3000/api/employees/available` | OAuth credential | ⏸️ Deactivated |
+| **AI Lead Analysis** | `cTp3tAVjyWmqHY2i` | Groq, не относится | OAuth credential | ✅ |
+
+## ✅ n8n OAuth2 Credential (2026-04-10 08:00)
+
+| Параметр | Значение |
+|----------|----------|
+| **Credential ID** | `7NqOd5ODFj6VHx2O` |
+| **Credential Name** | `Bitrix24 OAuth (hackathon-team-xx)` |
+| **Type** | `oAuth2Api` (n8n generic credential) |
+| **Grant Type** | `authorizationCode` |
+| **authUrl** | `https://b24-p0ujtw.bitrix24.ru/oauth/authorize/` |
+| **accessTokenUrl** | `https://b24-p0ujtw.bitrix24.ru/oauth/token/` |
+| **Auto-refresh** | ✅ n8n автоматически refresh'ит access_token через refresh_token |
+| **Refresh Token Test** | ✅ Проверено — возвращает новый access_token + refresh_token |
+| **6 нод привязаны** | Routing (3), My workflow (2), Transfer Inactive (1) |
+
+**Как работает auto-refresh:**
+```
+n8n HTTP Request node → запрос с access_token
+  → Если 401 (token expired)
+    → n8n POST /oauth/token/ с refresh_token
+    → Сохраняет новые tokens в credential
+    → Повторяет оригинальный запрос
+```
 
 ## ✅ Sync Fix (2026-04-10)
 
@@ -34,12 +57,12 @@
 
 | Компонент | Статус | Детали |
 |-----------|--------|--------|
-| **Dashboard UI** | ✅ | React+Vite дашборд, задеплоен на VPS, оптимизирован под высокие нагрузки |
-| **Bitrix24** | ⚠️ | Webhook: `crm`, `im`, `task`, `user`. `imopenlines.*` недоступен через webhook. OAuth приложение создано (Client ID: `local.69d869d2c008b9.92913433`) |
-| **Ollama** | ✅ | qwen2.5:14b на MacBook M4, warmup + keep_alive + num_predict |
-| **NestJS / DB** | ✅ | Порт 3001, 215 лидов загружены в LeadCache, routing работает |
-| **n8n** | ✅ | 6 воркфлоу, все на порту 3001, Routing workflow протестирован |
-| **Nginx proxy** | ✅ | `/nestjs-api/` → NestJS через VPS, dashboard раздаётся |
+| **Dashboard UI** | ✅ | React+Vite дашборд, задеплоен на VPS |
+| **Bitrix24** | ⚠️ | Webhook: `crm`, `im`, `task`, `user`. OAuth credential настроена с auto-refresh. Open Lines не подключён → Transfer Inactive деактивирован |
+| **Ollama** | ✅ | qwen2.5:14b на MacBook M4 (100.94.92.23:11434), routing ~2.5-19s |
+| **NestJS / DB** | ✅ | Порт 3001, 215 лидов, routing работает, 344 тестов |
+| **n8n** | ✅ | 5 активных workflow, 1 деактивирован, OAuth credential с auto-refresh |
+| **Nginx proxy** | ✅ | `/nestjs-api/` → NestJS через VPS |
 
 ---
 
@@ -93,7 +116,8 @@
 - **Bitrix24 → n8n:** webhook на `https://n8n.kurumi.software/webhook/routing-message` → VPS форвардит через Tailscale на MacBook
 - **n8n → NestJS:** `https://n8n.kurumi.software/nestjs-api/` → VPS Nginx proxy → `http://100.80.124.27:3001/api/`
 - **NestJS → Ollama:** прямой доступ по Tailscale (`http://100.94.92.23:11434`)
-- **NestJS → Bitrix24:** прямой HTTPS (`https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/`)
+- **n8n → Bitrix24:** через **OAuth2 credential** `7NqOd5ODFj6VHx2O` (auto-refresh)
+- **NestJS → Bitrix24:** прямой HTTPS (через webhook URL `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/`)
 
 **Legacy (НЕ импортируется в AppModule)**: applications, metrics, pipeline, escalations, auth, profile, core
 
@@ -132,8 +156,9 @@
 
 | Тип | Кол-во | Команда |
 |-----|--------|---------|
-| Unit | 344 | `pnpm --filter api test` |
-| Test Suites | 27 | `pnpm --filter api test` |
+| Unit (passing) | 344 | `pnpm --filter api test` |
+| Unit (failing) | 6 | pre-existing: tracking DI (2), analytics mock (2), bitrix start (2) |
+| Test Suites | 28/32 | `pnpm --filter api test` |
 
 **Конвенция:** Tests FIRST (unit → integration → e2e). >80% coverage target.
 
@@ -194,8 +219,8 @@ npx dotenv-cli -e .env.local -- node dist/main.js  # Запустить серв
 
 | Задача | Приоритет | Детали |
 |--------|-----------|--------|
-| **Подключить Open Lines** | 🔴 Высокий | Telegram/WhatsApp в Bitrix24 Contact Center для полного E2E теста |
-| **OAuth авторизация** | 🟡 Средний | Авторизовать OAuth приложение для `imopenlines.*` методов |
-| **E2E тест** | 🔴 Высокий | Написать сообщение → полный flow до менеджера |
-| **workEnd** | 🟢 Низкий | Вернуть актуальные рабочие часы после демо |
+| **Подключить Open Lines** | 🔴 Высокий | Telegram/WhatsApp в Bitrix24 Contact Center → включить Transfer Inactive |
+| **E2E тест** | 🔴 Высокий | Bitrix24 сообщение → полный flow до менеджера |
+| **workEnd** | 🟢 Низкий | Вернуть актуальные рабочие часы (18:00) после демо |
 | **SMTP** | 🟢 Низкий | Включить когда нужен mailing |
+| **Failing тесты** | 🟡 Средний | 6 pre-existing: tracking DI, analytics mock, bitrix start param |

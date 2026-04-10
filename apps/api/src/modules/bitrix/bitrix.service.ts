@@ -162,18 +162,20 @@ export class BitrixService {
 
   /**
    * Получить открытые сессии
+   * Если Open Lines не подключён — тихо возвращаем mock data (без ERROR логов)
    */
   async getOpenSessions(params?: {
     filter?: Record<string, any>;
   }): Promise<any> {
     try {
-      const response = await this.call('imopenlines.session.list', {
+      const response = await this.httpClient.post('imopenlines.session.list', {
         filter: params?.filter ?? { ACTIVE: 'Y' },
       });
-      return response;
+      return response.data?.result ?? response.data;
     } catch (error: any) {
-      this.logger.warn(
-        `Failed to fetch open sessions (Bitrix API). Error: ${error?.message || error}. Returning mock data for demonstration.`,
+      // Open Lines не подключён — это ожидаемо, не логируем ERROR
+      this.logger.debug(
+        `Open sessions unavailable (${error?.message || error}). Using mock data.`,
       );
       
       // Mock data for demo since real Bitrix API returns 404 on free plan

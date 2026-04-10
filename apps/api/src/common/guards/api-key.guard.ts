@@ -30,7 +30,14 @@ export class ApiKeyGuard implements CanActivate {
       return true;
     }
 
-    const apiKey = request.headers['x-api-key'] as string | undefined;
+    const apiKeyHeader = request.headers['x-api-key'] as string | undefined;
+    const authHeader = request.headers['authorization'] as string | undefined;
+    
+    let apiKey = apiKeyHeader;
+    if (!apiKey && authHeader && authHeader.startsWith('Bearer ')) {
+      apiKey = authHeader.substring(7);
+    }
+    
     const expectedKey = this.configService.get<string>('API_SECRET_KEY');
 
     if (!expectedKey) {

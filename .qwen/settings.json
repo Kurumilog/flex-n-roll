@@ -46,6 +46,10 @@
         "Authorization": "Bearer 123456789"
       }
     },
+    "b24-dev-mcp": {
+      "url": "https://mcp-dev.bitrix24.tech/mcp",
+      "type": "http"
+    },
     "shadcn": {
       "command": "/bin/bash",
       "args": [

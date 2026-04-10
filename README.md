@@ -2,10 +2,11 @@
 
 > AI-powered lead routing system for Flex-N-Roll PRO — a B2B label manufacturing company (Minsk + Moscow).
 
-[![Tests](https://img.shields.io/badge/tests-348%20passed-brightgreen)]()
+[![Tests](https://img.shields.io/badge/tests-344%20passing%20%7C%206%20failing-yellow)]()
 [![NestJS](https://img.shields.io/badge/NestJS-10.4-e01563)]()
 [![Prisma](https://img.shields.io/badge/Prisma-5.22-2d3748)]()
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-3178c6)]()
+[![n8n OAuth](https://img.shields.io/badge/n8n%20OAuth-auto--refresh-green)]()
 
 ---
 

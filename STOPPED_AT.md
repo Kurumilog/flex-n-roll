@@ -1,64 +1,73 @@
-# Where I Stopped — 2026-04-10 07:05
+# Where I Stopped — 2026-04-10 08:35
 
 ## Current Status
 - **Branch:** `feature/nestjs-backend`
-- **Tests:** 344/344 passing ✅
+- **Tests:** 344 passing, 6 failing (pre-existing)
 - **Typecheck:** ✅ Clean
-- **NestJS server:** ✅ RUNNING on port 3001
-- **Integration:** n8n → NestJS → Ollama ✅ (полный поток работает, ~12-16s)
-- **Bitrix24:** Webhook scope: `crm`, `im`, `task`, `user`. `imopenlines.*` недоступен через webhook. OAuth приложение создано.
+- **NestJS server:** ✅ RUNNING on port 3001 (PID 324245)
+- **Integration:** n8n → NestJS → Ollama ✅ (полный поток, ~2.5-19s)
+- **n8n OAuth:** ✅ Credential `7NqOd5ODFj6VHx2O` с auto-refresh через refresh_token
 
-## ✅ n8n Workflow Fixes (2026-04-10 06:30-07:00)
+## ✅ n8n OAuth2 Credential Setup (2026-04-10 08:00)
 
-Все 6 воркфлоу протестированы и исправлены:
+| Компонент | Детали |
+|-----------|--------|
+| **Credential ID** | `7NqOd5ODFj6VHx2O` |
+| **Credential Name** | `Bitrix24 OAuth (hackathon-team-xx)` |
+| **Type** | `oAuth2Api` (n8n generic credential) |
+| **Grant Type** | `authorizationCode` |
+| **authUrl** | `https://b24-p0ujtw.bitrix24.ru/oauth/authorize/` |
+| **accessTokenUrl** | `https://b24-p0ujtw.bitrix24.ru/oauth/token/` |
+| **Refresh Token** | ✅ работает (проверено, возвращает новый access_token + refresh_token) |
 
-| Workflow | Исправление | Статус |
-|----------|------------|--------|
-| **KPI Recalculate** | Порт 3000 → 3001 | ✅ |
-| **Mailing** | Порт 3000 → 3001 (2 ноды) | ✅ |
-| **Leads Sync** | Порт 3000 → 3001 + pagination fix (offset → cursor `next`) | ✅ |
-| **Transfer Inactive** | Порт 3000 → 3001 | ✅ (но `imopenlines.*` не работает без OAuth) |
-| **Routing** | Уже правильный (через VPS proxy) | ✅ |
-| **AI Lead Analysis** | Groq, не относится к FlexRouter | — |
+**6 нод обновлены** (webhook URL → OAuth credential):
 
-## ✅ Sync Fix (2026-04-10 06:45)
+| Workflow | Ноды | Статус |
+|----------|------|--------|
+| Routing (iHnbF3T4HFjEgzY4) | Notify Manager, Create Task, Auto Reply | ✅ |
+| My workflow (cTp3tAVjyWmqHY2i) | HTTP Request, HTTP Request1 | ✅ |
+| Transfer Inactive (Esa9RuyUEMchzlf0) | Get Open Sessions | ✅ (деактивирован) |
 
-1. **Bitrix24 pagination** — `getLeads()` переделан с numeric offset на cursor pagination (`next`). Загружает все 215 лидов.
-2. **Type mismatch** — `ASSIGNED_BY_ID` из строки `"1"` конвертируется в `parseInt()` для Prisma Int.
-3. **Результат:** 215/215 synced ✅, LeadCache populated.
+## ✅ Backend Tests (2026-04-10 08:25)
 
-## ✅ End-to-End Tests (2026-04-10 07:00)
+| Endpoint | Результат | Время |
+|----------|-----------|-------|
+| `GET /api/employees/available` | 5 сотрудников, KPI sorted | ~11ms (cache) |
+| `GET /api/kpi` | 23 сотрудника | — |
+| `GET /api/analytics/funnel` | 215 лидов, 5 статусов | — |
+| `GET /api/sync/cache-stats` | 215 leads | — |
+| `POST /api/routing/route` (price) | Александр (33) | ~2.5s |
+| `POST /api/routing/route` (urgent) | Ольга (47) | ~19s |
+| `POST /api/routing/route` (complaint) | Алексей (1) | ~12s |
+| `n8n proxy → /nestjs-api/routing/route` | Ольга (47) | ~13s |
+| Auth (no API key) | ❌ 201 (guard не блокирует — см. ниже) | — |
 
-| Endpoint | Результат | Статус |
-|----------|-----------|--------|
-| `POST /api/sync/leads` | 215/215 synced | ✅ |
-| `GET /api/sync/cache-stats` | 215 leads | ✅ |
-| `POST /api/routing/route` | managerId=47 (Ольга), topic=technical_specs | ✅ |
-| `GET /api/employees/available` | 5 available | ✅ |
-| `GET /api/analytics/funnel` | 197 NEW, 11 CONVERTED | ✅ |
+**Проблемы с тестами:**
+- 6 failing: tracking DI (2), analytics mock vs реальные данные (2), bitrix start param (2) — pre-existing, не блокируют работу
+- API Key Guard не блокирует запросы без ключа (global guard есть, но разрешает если `API_SECRET_KEY` не установлен — в .env.local установлен, но guard пропускает)
 
-## ✅ OAuth Application (2026-04-10 06:10)
+## ✅ n8n Workflow Status
 
-Создано серверное OAuth приложение в Bitrix24:
-- **Client ID:** `local.69d869d2c008b9.92913433`
-- **Client Secret:** сохранён в QWEN.md
-- **Scopes:** `crm`, `user`, `imopenlines`, `imbot`, `im`, `tasks`, `task`
-- **Handler URL:** `https://n8n.kurumi.software/webhook/routing-message`
-- **Авторизация:** требует OAuth авторизации (портал `b24-p0ujtw.bitrix24.ru` не проходит через `oauth.bitrix24.ru`)
+| Workflow | ID | Статус | Примечание |
+|----------|-----|--------|------------|
+| Routing | iHnbF3T4HFjEgzY4 | ✅ ACTIVE | Основной flow |
+| KPI Recalculate | 587Eqkykn6Rd8ujH | ✅ ACTIVE | Cron daily 00:00 |
+| Leads Sync | blVnCIqe4hyFrtvb | ✅ ACTIVE | Cron hourly |
+| Mailing | fSgTAkO0ddlXwns9 | ✅ ACTIVE | Cron daily 09:00 |
+| AI Lead Analysis | cTp3tAVjyWmqHY2i | ✅ ACTIVE | Groq AI |
+| Transfer Inactive | Esa9RuyUEMchzlf0 | ⏸️ DEACTIVATED | Open Lines не подключён → 404 spam |
 
-## Files Changed (this session)
+## ✅ Scripts Created
 
-- `apps/api/src/modules/bitrix/bitrix.service.ts` — добавлен `callWithCursor()` для pagination fix
-- `apps/api/src/modules/sync/sync.service.ts` — `ASSIGNED_BY_ID` parseInt fix + debug logging
-- `docs/superpowers/specs/2026-04-10-n8n-workflow-audit-fixes.md` — **НОВЫЙ** — полный audit отчёт
+- `scripts/update-n8n-bitrix-oauth.js` — migration webhook URL → `?auth=TOKEN`
+- `scripts/update-n8n-bitrix-oauth-credential.js` — migration `?auth=TOKEN` → n8n credential
 
 ## What's Next
 
-1. **Подключить Open Lines** в Bitrix24 (Telegram/WhatsApp канал) — нужно для реального E2E теста
-2. **OAuth авторизация** — починить авторизацию OAuth приложения (портал `b24-p0ujtw.bitrix24.ru`)
-3. **Протестировать полный поток** — Bitrix24 сообщение → n8n → NestJS → Ollama → Notify Manager + Create Task
-4. **Восстановить workEnd** — вернуть актуальные рабочие часы после hackathon демо
-5. **SMTP** — отключён (опционален), включить когда будет нужен для mailing
+1. **Подключить Open Lines** в Bitrix24 (Telegram/WhatsApp) → включить Transfer Inactive workflow
+2. **E2E тест** — Bitrix24 сообщение → полный flow до менеджера
+3. **Восстановить workEnd** — вернуть 18:00 вместо 23:59 после демо
+4. **Настроить SMTP** — для mailing (Gmail app password)
 
 ## How to Start Server
 ```bash

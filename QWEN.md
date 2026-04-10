@@ -283,3 +283,85 @@ PrismaService не инжектится в сервисы через NestJS DI �
 ### Bitrix24 Webhook Note
 На Bitrix24 настроен только один исходящий вебхук: `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/`
 Это нужно учитывать при интеграции — все вызовы к Bitrix24 идут через этот webhook.
+
+---
+
+## ✅ n8n OAuth2 Credential Setup (2026-04-10 08:00)
+
+### Credential
+- **ID:** `7NqOd5ODFj6VHx2O`
+- **Name:** `Bitrix24 OAuth (hackathon-team-xx)`
+- **Type:** `oAuth2Api` (n8n generic credential)
+- **Grant Type:** `authorizationCode`
+- **authUrl:** `https://b24-p0ujtw.bitrix24.ru/oauth/authorize/`
+- **accessTokenUrl:** `https://b24-p0ujtw.bitrix24.ru/oauth/token/`
+- **Client ID:** `local.69d869d2c008b9.92913433`
+- **Client Secret:** `8hBVq9suhSK0mZRPhSBxotz2PKi0cgTH39EBLuRqCy9GinDunl`
+- **Scope:** `crm im task imopenlines imbot tasks user`
+
+### 6 nод обновлены (webhook URL → OAuth credential)
+| Workflow | Ноды |
+|----------|------|
+| Routing (iHnbF3T4HFjEgzY4) | Notify Manager, Create Task, Auto Reply |
+| My workflow (cTp3tAVjyWmqHY2i) | HTTP Request, HTTP Request1 |
+| Transfer Inactive (Esa9RuyUEMchzlf0) | Get Open Sessions |
+
+### Auto-refresh
+n8n автоматически refresh'ит access_token когда получает 401 от Bitrix24:
+```
+HTTP Request node → запрос с access_token
+  → Если 401 (token expired)
+    → n8n POST /oauth/token/ с refresh_token
+    → Сохраняет новые tokens в credential
+    → Повторяет оригинальный запрос
+```
+**Refresh token протестирован** — Bitrix24 возвращает новый access_token + новый refresh_token при каждом вызове.
+
+### Scripts
+- `scripts/update-n8n-bitrix-oauth.js` — migration webhook URL → `?auth=TOKEN`
+- `scripts/update-n8n-bitrix-oauth-credential.js` — migration `?auth=TOKEN` → n8n credential
+
+## ✅ Integration Tests (2026-04-10 08:30)
+
+| Endpoint | Результат | Время |
+|----------|-----------|-------|
+| `GET /api/employees/available` | 5 сотрудников, KPI sorted | ~11ms (cache) |
+| `POST /api/routing/route` (price) | Александр (33) | ~2.5s |
+| `POST /api/routing/route` (urgent) | Ольга (47) | ~19s |
+| `POST /api/routing/route` (complaint) | Алексей (1) | ~12s |
+| `n8n proxy → routing/route` | ✅ через VPS | ~13s |
+| Refresh token | ✅ new access_token + new refresh_token | — |
+
+## ⏸️ Transfer Inactive Deactivated
+Workflow `Esa9RuyUEMchzlf0` деактивирован — Open Lines не подключён, `imopenlines.session.list` → 404 spam каждые 15 сек.
+Включить обратно после подключения Open Lines в Bitrix24.
+
+##  n8n Routing Workflow — In Progress (2026-04-10 09:30)
+
+**Цель:** Bitrix24 Open Lines webhook → n8n → NestJS Routing → Ollama → Bitrix24 transfer
+
+**Текущий workflow:** `FlexRouter — Routing (fixed)` (ID: `UBEFeoHPxyaywt6P`)
+**Webhook path:** `routing-message-fixed` → `https://n8n.kurumi.software/webhook/routing-message-fixed`
+
+### Что сделано:
+- ✅ Workflow создан с нуля: Webhook → Extract Data → NestJS Routing → IF → (Notify Manager + Create Task) / Auto Reply
+- ✅ OAuth2 credential `7NqOd5ODFj6VHx2O` привязана к Notify Manager, Create Task, Auto Reply
+- ✅ NestJS запущен (PID 336539, порт 3001, Ollama warmed up)
+- ✅ NestJS Routing работает при прямом вызове (curl → NestJS OK)
+
+### Что НЕ работает (осталось починить):
+1. **502 Bad Gateway** — n8n → VPS proxy → NestJS не проходит. nginx на VPS (159.65.122.92) не проксирует `/nestjs-api/` на Tailscale IP NestJS.
+   - Нужно: проверить/починить nginx конфиг на VPS для `location /nestjs-api/`
+2. **Extract Data пустые поля** — в тестовом режиме n8n webhook данные приходят в другом формате. Code node не находит `data.MESSAGES[0].TEXT`.
+   - Нужно: отладить в n8n UI — посмотреть что реально приходит в Webhook node input
+3. **NestJS Routing URL** — сейчас `https://n8n.kurumi.software/nestjs-api/routing/route` (VPS proxy). Альтернатива: прямой Tailscale `http://100.80.124.27:3001/api/routing/route` (но MacBook → CachyOS через Tailscale может не работать)
+
+### Следующие шаги:
+1. На MacBook (n8n): в UI посмотреть что приходит в Webhook node → поправить Extract Data Code
+2. На VPS: проверить nginx конфиг для `/nestjs-api/` → перезапустить nginx
+3. Протестировать полный flow: webhook → extract → NestJS → IF → Notify Manager
+
+## Known Issues
+- 6 тестов failing (pre-existing): tracking DI (2), analytics mock (2), bitrix start param (2)
+- API Key Guard пропускает запросы без ключа (global guard разрешает если `API_SECRET_KEY` не установлен)
+- Transfer Inactive workflow деактивирован до подключения Open Lines

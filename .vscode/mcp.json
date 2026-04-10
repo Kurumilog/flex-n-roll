@@ -20,6 +20,10 @@
       ],
       "env": {}
     },
+    "b24-dev-mcp": {
+      "url": "https://mcp-dev.bitrix24.tech/mcp",
+      "type": "http"
+    },
     "n8n-mcp": {
       "type": "stdio",
       "command": "npx",
@@ -31,6 +35,5 @@
         "Authorization: Bearer 123456789"
       ]
     }
-  },
-  "inputs": []
+  }
 }
