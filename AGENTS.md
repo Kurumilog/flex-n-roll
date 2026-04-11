@@ -287,11 +287,11 @@ model IncomingEvent {
 DATABASE_URL="postgresql://USER:PASS@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?connection_limit=50&pool_timeout=60"
 
 # Bitrix24
-BITRIX24_WEBHOOK_URL="https://hackathon-team-xx.bitrix24.ru/rest/1/XXXXX"
+BITRIX24_WEBHOOK_URL="https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE"
 BITRIX24_INCOMING_SECRET="your-secret-for-validating-incoming-events"
 
 # Ollama (MacBook M4, доступен через Tailscale)
-OLLAMA_BASE_URL="http://100.x.x.x:11434"
+OLLAMA_BASE_URL="http://YOUR_TAILSCALE_IP:11434"
 OLLAMA_ROUTING_MODEL="qwen2.5:14b-instruct"
 OLLAMA_TIMEOUT_MS=15000
 
@@ -308,7 +308,7 @@ NODE_ENV=development
 API_SECRET_KEY="strong-random-key-for-n8n-to-nestjs-calls"
 
 # n8n (Tailscale IP MacBook)
-N8N_BASE_URL="http://100.x.x.x:5678"
+N8N_BASE_URL="http://YOUR_TAILSCALE_IP:5678"
 ```
 
 Файл `.env.test`:

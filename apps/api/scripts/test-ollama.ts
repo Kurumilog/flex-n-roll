@@ -3,7 +3,7 @@
  */
 import axios from 'axios';
 
-const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://100.94.92.23:11434';
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://YOUR_TAILSCALE_IP:11434';
 const OLLAMA_MODEL = process.env.OLLAMA_ROUTING_MODEL || 'qwen2.5:14b';
 
 async function testOllama() {

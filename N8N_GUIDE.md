@@ -71,7 +71,7 @@ n8n start --tunnel
 #### Шаг 5: Bitrix24 — Transfer Session
 - **Node:** HTTP Request
 - **Method:** POST
-- **URL:** `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/imopenlines.session.transfer`
+- **URL:** `https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/imopenlines.session.transfer`
 - **Body:** Form Data
   ```
   id: {{$json.data.managerId}}
@@ -82,7 +82,7 @@ n8n start --tunnel
 #### Шаг 6: Bitrix24 — Create Task
 - **Node:** HTTP Request
 - **Method:** POST
-- **URL:** `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/tasks.task.add`
+- **URL:** `https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/tasks.task.add`
 - **Body:** JSON
   ```json
   {
@@ -98,7 +98,7 @@ n8n start --tunnel
 #### Шаг 7: Автоответ (нет менеджеров)
 - **Node:** HTTP Request
 - **Method:** POST
-- **URL:** `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/im.message.add`
+- **URL:** `https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/im.message.add`
 - **Body:** JSON
   ```json
   {
@@ -211,15 +211,15 @@ ngrok http 5678
 ## 7. Настройка Bitrix24 webhook
 
 ### 7.1. Создание входящего webhook
-1. Открой https://b24-p0ujtw.bitrix24.ru
+1. Открой https://YOUR-PORTAL.bitrix24.ru
 2. Приложения → Вебхуки → Добавить webhook
 3. Права: `crm`, `im`, `imopenlines`, `task`, `user`
-4. Скопируй URL: `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/`
+4. Скопируй URL: `https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/`
 
 ### 7.2. Регистрация event handler
 ```bash
 # Через curl зарегистрировать обработчик событий
-curl -X POST "https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/event.bind" \
+curl -X POST "https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/event.bind" \
   -H "Content-Type: application/json" \
   -d '{
     "event": "ONOPENLINEMESSAGEADD",
@@ -229,7 +229,7 @@ curl -X POST "https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/event.bind"
 
 Или через n8n:
 1. Node: HTTP Request
-2. URL: `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/event.bind`
+2. URL: `https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/event.bind`
 3. Method: POST
 4. Body JSON:
    ```json

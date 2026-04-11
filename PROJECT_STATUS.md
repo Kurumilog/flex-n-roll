@@ -25,12 +25,12 @@
 
 | Параметр | Значение |
 |----------|----------|
-| **Credential ID** | `7NqOd5ODFj6VHx2O` |
+| **Credential ID** | `YOUR_N8N_CREDENTIAL_ID` |
 | **Credential Name** | `Bitrix24 OAuth (hackathon-team-xx)` |
 | **Type** | `oAuth2Api` (n8n generic credential) |
 | **Grant Type** | `authorizationCode` |
-| **authUrl** | `https://b24-p0ujtw.bitrix24.ru/oauth/authorize/` |
-| **accessTokenUrl** | `https://b24-p0ujtw.bitrix24.ru/oauth/token/` |
+| **authUrl** | `https://YOUR-PORTAL.bitrix24.ru/oauth/authorize/` |
+| **accessTokenUrl** | `https://YOUR-PORTAL.bitrix24.ru/oauth/token/` |
 | **Auto-refresh** | ✅ n8n автоматически refresh'ит access_token через refresh_token |
 | **Refresh Token Test** | ✅ Проверено — возвращает новый access_token + refresh_token |
 | **6 нод привязаны** | Routing (3), My workflow (2), Transfer Inactive (1) |
@@ -59,7 +59,7 @@ n8n HTTP Request node → запрос с access_token
 |-----------|--------|--------|
 | **Dashboard UI** | ✅ | React+Vite дашборд, задеплоен на VPS |
 | **Bitrix24** | ⚠️ | Webhook: `crm`, `im`, `task`, `user`. OAuth credential настроена с auto-refresh. Open Lines не подключён → Transfer Inactive деактивирован |
-| **Ollama** | ✅ | qwen2.5:14b на MacBook M4 (100.94.92.23:11434), routing ~2.5-19s |
+| **Ollama** | ✅ | qwen2.5:14b на MacBook M4 (YOUR_TAILSCALE_IP:11434), routing ~2.5-19s |
 | **NestJS / DB** | ✅ | Порт 3001, 215 лидов, routing работает, 344 тестов |
 | **n8n** | ✅ | 5 активных workflow, 1 деактивирован, OAuth credential с auto-refresh |
 | **Nginx proxy** | ✅ | `/nestjs-api/` → NestJS через VPS |
@@ -114,10 +114,10 @@ n8n HTTP Request node → запрос с access_token
 
 ### Как работает доступ
 - **Bitrix24 → n8n:** webhook на `https://n8n.kurumi.software/webhook/routing-message` → VPS форвардит через Tailscale на MacBook
-- **n8n → NestJS:** `https://n8n.kurumi.software/nestjs-api/` → VPS Nginx proxy → `http://100.80.124.27:3001/api/`
-- **NestJS → Ollama:** прямой доступ по Tailscale (`http://100.94.92.23:11434`)
-- **n8n → Bitrix24:** через **OAuth2 credential** `7NqOd5ODFj6VHx2O` (auto-refresh)
-- **NestJS → Bitrix24:** прямой HTTPS (через webhook URL `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/`)
+- **n8n → NestJS:** `https://n8n.kurumi.software/nestjs-api/` → VPS Nginx proxy → `http://YOUR_TAILSCALE_IP:3001/api/`
+- **NestJS → Ollama:** прямой доступ по Tailscale (`http://YOUR_TAILSCALE_IP:11434`)
+- **n8n → Bitrix24:** через **OAuth2 credential** `YOUR_N8N_CREDENTIAL_ID` (auto-refresh)
+- **NestJS → Bitrix24:** прямой HTTPS (через webhook URL `https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/`)
 
 **Legacy (НЕ импортируется в AppModule)**: applications, metrics, pipeline, escalations, auth, profile, core
 

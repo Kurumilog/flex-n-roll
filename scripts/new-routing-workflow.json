@@ -72,7 +72,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "method": "POST",
-        "url": "=https://b24-p0ujtw.bitrix24.ru/rest/im.message.add",
+        "url": "=https://YOUR-PORTAL.bitrix24.ru/rest/im.message.add",
         "sendBody": true,
         "contentType": "application/json",
         "specifyBody": "json",
@@ -86,7 +86,7 @@
       "name": "Notify Manager",
       "onError": "continueRegularOutput",
       "credentials": {
-        "oAuth2Api": { "id": "7NqOd5ODFj6VHx2O", "name": "Bitrix24 OAuth (hackathon-team-xx)" }
+        "oAuth2Api": { "id": "YOUR_N8N_CREDENTIAL_ID", "name": "Bitrix24 OAuth (hackathon-team-xx)" }
       }
     },
     {
@@ -94,7 +94,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "method": "POST",
-        "url": "=https://b24-p0ujtw.bitrix24.ru/rest/tasks.task.add",
+        "url": "=https://YOUR-PORTAL.bitrix24.ru/rest/tasks.task.add",
         "sendBody": true,
         "contentType": "application/json",
         "specifyBody": "json",
@@ -108,7 +108,7 @@
       "name": "Create Task",
       "onError": "continueRegularOutput",
       "credentials": {
-        "oAuth2Api": { "id": "7NqOd5ODFj6VHx2O", "name": "Bitrix24 OAuth (hackathon-team-xx)" }
+        "oAuth2Api": { "id": "YOUR_N8N_CREDENTIAL_ID", "name": "Bitrix24 OAuth (hackathon-team-xx)" }
       }
     },
     {
@@ -116,7 +116,7 @@
         "authentication": "genericCredentialType",
         "genericAuthType": "oAuth2Api",
         "method": "POST",
-        "url": "=https://b24-p0ujtw.bitrix24.ru/rest/im.message.add",
+        "url": "=https://YOUR-PORTAL.bitrix24.ru/rest/im.message.add",
         "sendBody": true,
         "contentType": "application/json",
         "specifyBody": "json",
@@ -130,7 +130,7 @@
       "name": "Auto Reply",
       "onError": "continueRegularOutput",
       "credentials": {
-        "oAuth2Api": { "id": "7NqOd5ODFj6VHx2O", "name": "Bitrix24 OAuth (hackathon-team-xx)" }
+        "oAuth2Api": { "id": "YOUR_N8N_CREDENTIAL_ID", "name": "Bitrix24 OAuth (hackathon-team-xx)" }
       }
     },
     {

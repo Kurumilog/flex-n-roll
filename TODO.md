@@ -44,7 +44,7 @@
 - [x] AI Routing через Ollama (qwen2.5:14b, ~2.5-19s)
 - [x] Bitrix24 интеграция (CRM, tasks, messages)
 - [x] Nginx proxy через VPS
-- [x] **n8n OAuth2 credential** — `7NqOd5ODFj6VHx2O` с auto-refresh через refresh_token
+- [x] **n8n OAuth2 credential** — `YOUR_N8N_CREDENTIAL_ID` с auto-refresh через refresh_token
 - [x] **6 Bitrix24 нод** привязаны к credential (static token удалён из URL)
 - [x] **Transfer Inactive деактивирован** — до подключения Open Lines (убрал 404 спам)
 - [x] **Тесты проведены** — routing, employees, kpi, analytics, sync, n8n proxy

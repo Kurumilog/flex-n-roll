@@ -69,8 +69,8 @@ async function main() {
 
   // ── 2. NestJS Routing — URL через Tailscale (n8n MacBook → NestJS CachyOS) ──
   const nestjsNode = wf.nodes.find(n => n.name === 'NestJS Routing');
-  // n8n на MacBook (100.94.92.23) → NestJS на CachyOS (100.80.124.27:3001)
-  nestjsNode.parameters.url = 'http://100.80.124.27:3001/api/routing/route';
+  // n8n on MacBook (YOUR_TAILSCALE_IP) → NestJS on CachyOS (YOUR_TAILSCALE_IP:3001)
+  nestjsNode.parameters.url = 'http://YOUR_TAILSCALE_IP:3001/api/routing/route';
   nestjsNode.parameters.jsonBody = '={ "messageText": "{{ $json.messageText }}", "channel": "{{ $json.channel }}", "clientBitrixId": "{{ $json.sessionId }}", "eventId": "{{ $json.eventId }}" }';
   console.log('✅ NestJS Routing → Tailscale URL:', nestjsNode.parameters.url);
 

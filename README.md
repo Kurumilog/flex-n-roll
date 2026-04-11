@@ -114,14 +114,14 @@ cp apps/api/.env.example apps/api/.env.local
 | `DATABASE_URL` | Supabase PostgreSQL connection string | `postgresql://postgres.xxx:...@aws-0-xx.pooler.supabase.com:6543/postgres` |
 | `BITRIX24_WEBHOOK_URL` | Bitrix24 REST API webhook | `https://your-portal.bitrix24.ru/rest/1/CODE/` |
 | `BITRIX24_INCOMING_SECRET` | Secret for validating incoming events | `your-secret` |
-| `OLLAMA_BASE_URL` | Ollama API URL (via Tailscale) | `http://100.x.x.x:11434` |
+| `OLLAMA_BASE_URL` | Ollama API URL (via Tailscale) | `http://YOUR_TAILSCALE_IP:11434` |
 | `OLLAMA_ROUTING_MODEL` | LLM model name | `qwen2.5:14b-instruct` |
 | `OLLAMA_TIMEOUT_MS` | Ollama request timeout (ms) | `15000` |
 | `SMTP_HOST` / `SMTP_PORT` | Email server for mailings | `smtp.gmail.com` / `587` |
 | `SMTP_USER` / `SMTP_PASS` | Email credentials | `noreply@example.com` / `app-password` |
 | `SMTP_FROM` | From address for mailings | `FlexRouter <noreply@example.com>` |
 | `API_SECRET_KEY` | Key protecting endpoints from n8n | `generate-a-strong-random-key` |
-| `N8N_BASE_URL` | n8n URL (via Tailscale) | `http://100.x.x.x:5678` |
+| `N8N_BASE_URL` | n8n URL (via Tailscale) | `http://YOUR_TAILSCALE_IP:5678` |
 
 ### 3. Run Tests
 

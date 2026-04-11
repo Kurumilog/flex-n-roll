@@ -21,7 +21,7 @@
 **Dashboard**: React + Vite + TailwindCSS (iframe для Bitrix24)
 **n8n**: 6 воркфлоу (Routing, KPI, Sync, Mailing, Transfer, AI Analysis)
 **LLM**: Ollama qwen2.5:14b (MacBook M4 через Tailscale)
-**Bitrix24**: Webhook + OAuth приложение (Client ID: `local.69d869d2c008b9.92913433`)
+**Bitrix24**: Webhook + OAuth приложение (Client ID: `YOUR_CLIENT_ID`)
 **Тесты**: 344 unit tests, 27 test suites
 **DB**: 215 лидов в LeadCache, 23 сотрудника
 

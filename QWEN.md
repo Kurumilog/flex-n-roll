@@ -7,7 +7,7 @@
 - **Data:** 23 employees, 200 leads, 20 deals, 30 dialog examples (FNR_PRO_Hackathon/data/)
 
 ### Physical Architecture (3 nodes)
-- **Node 1 — MacBook M4 (друг):** n8n local (:5678) + Ollama (qwen2.5:14b-instruct, OLLAMA_NUM_PARALLEL=4). Доступ через Tailscale (100.x.x.x).
+- **Node 1 — MacBook M4 (друг):** n8n local (:5678) + Ollama (qwen2.5:14b-instruct, OLLAMA_NUM_PARALLEL=4). Доступ через Tailscale (YOUR_TAILSCALE_IP_NODE1).
 - **Node 2 — VPS kurumi.software:** Nginx + SSL + Tailscale. Форвардит HTTPS webhook'и от Bitrix24 на MacBook друга.
 - **Node 3 — Твой сервер:** NestJS API (:3000) + Supabase (cloud PostgreSQL). Обращается к n8n/Ollama по Tailscale IP напрямую.
 - **Bitrix24 (облако):** hackathon-team-xx.bitrix24.ru. Open Lines (Telegram/WhatsApp/Email). Webhook на https://n8n.kurumi.software.
@@ -97,7 +97,7 @@
 - ✅ **SERVER RUNNING** — NestJS API на порту 3001, все endpoints работают
 - ✅ **INTEGRATION PHASE** — n8n → NestJS → Ollama работает (~12-16s полный поток)
 - ✅ **PERFORMANCE OPTIMIZATIONS APPLIED** — warmup, keep_alive, num_predict, in-memory cache
-- ✅ **Nginx proxy** — `/nestjs-api/` → NestJS через VPS (159.65.122.92)
+- ✅ **Nginx proxy** — `/nestjs-api/` → NestJS через VPS (YOUR_VPS_PUBLIC_IP)
 - ✅ **Bitrix24 webhook** — scope расширены: `crm`, `im`, `task`, `user`
 - ✅ **n8n workflow** — Transfer Session заменён на Notify Manager (im.message.add)
 - ⏳ **Open Lines не подключён** — нужен для полного E2E теста
@@ -147,15 +147,15 @@ curl https://n8n.kurumi.software/nestjs-api/health
 ```
 
 ---
-- Project: FlexRouter AI — 3-node architecture. Node 1: MacBook M4 (friend) runs n8n (:5678) + Ollama (qwen2.5:14b). Node 2: VPS kurumi.software runs Nginx+SSL+Tailscale, forwards Bitrix24 webhooks to MacBook. Node 3: User's server runs NestJS API (:3000) + Supabase cloud, accesses n8n/Ollama via Tailscale IP directly. Bitrix24 webhooks go to https://n8n.kurumi.software → VPS → Tailscale → n8n. NestJS calls n8n/Ollama via Tailscale IP (http://100.x.x.x:PORT). All 6 phases complete, **348 tests passing**, performance optimizations applied (warmup, keep_alive, num_predict, cache).
+- Project: FlexRouter AI — 3-node architecture. Node 1: MacBook M4 (friend) runs n8n (:5678) + Ollama (qwen2.5:14b). Node 2: VPS kurumi.software runs Nginx+SSL+Tailscale, forwards Bitrix24 webhooks to MacBook. Node 3: User's server runs NestJS API (:3000) + Supabase cloud, accesses n8n/Ollama via Tailscale IP directly. Bitrix24 webhooks go to https://n8n.kurumi.software → VPS → Tailscale → n8n. NestJS calls n8n/Ollama via Tailscale IP (http://YOUR_TAILSCALE_IP_NODE1:PORT). All 6 phases complete, **348 tests passing**, performance optimizations applied (warmup, keep_alive, num_predict, cache).
 - FlexRouter AI hackathon backend fully implemented and pushed to GitHub (https://github.com/Kurumilog/flex-n-roll, branch feature/nestjs-backend). All 6 phases complete, **348 tests passing**, performance optimizations applied (warmup + keep_alive + cache), Supabase migration applied, README written.
 - ## FlexRouter AI Architecture (3 nodes)
 
-**Node 1 — MacBook M4 (друг):** n8n local (:5678) + Ollama (qwen2.5:14b). Tailscale IP: 100.94.92.23
+**Node 1 — MacBook M4 (друг):** n8n local (:5678) + Ollama (qwen2.5:14b). Tailscale IP: YOUR_TAILSCALE_IP_NODE1
 
-**Node 2 — VPS kurumi.software:** Nginx + SSL + Tailscale. Public IP: 159.65.122.92. Tailscale IP: 100.103.222.127. Форвардит HTTPS webhook'и от Bitrix24 на MacBook.
+**Node 2 — VPS kurumi.software:** Nginx + SSL + Tailscale. Public IP: YOUR_VPS_PUBLIC_IP. Tailscale IP: YOUR_TAILSCALE_IP_NODE2. Форвардит HTTPS webhook'и от Bitrix24 на MacBook.
 
-**Node 3 — Твой сервер (CachyOS):** NestJS API (:3000) + Supabase (cloud PostgreSQL). Tailscale IP: 100.80.124.27
+**Node 3 — Твой сервер (CachyOS):** NestJS API (:3000) + Supabase (cloud PostgreSQL). Tailscale IP: YOUR_TAILSCALE_IP_NODE3
 
 **Bitrix24 (облако):** hackathon-team-xx.bitrix24.ru. Webhook на https://n8n.kurumi.software.
 
@@ -165,17 +165,17 @@ curl https://n8n.kurumi.software/nestjs-api/health
 |--------|------|-----|-----|
 | n8n → NestJS | webhook | https://n8n.kurumi.software → VPS → Tailscale → NestJS | GET /employees/available, POST /routing/route, POST /kpi/recalculate, POST /sync/leads, GET/POST /mailing/*, GET /analytics/* |
 | NestJS → Bitrix24 | ПРЯМОЙ HTTPS | BitrixService (getLeads, getDeals, getOpenSessions, transferSession, createLead, createTask, sendMessage, addActivity) | https://hackathon-team-xx.bitrix24.ru/rest/1/XXXXX |
-| NestJS → Ollama | Tailscale прямой | OllamaService (chat, embed) | http://100.94.92.23:11434 |
+| NestJS → Ollama | Tailscale прямой | OllamaService (chat, embed) | http://YOUR_TAILSCALE_IP_NODE1:11434 |
 | NestJS → n8n | webhook | N8nService (triggerWorkflow) | https://n8n.kurumi.software/webhook/{name} |
 | AI (я) → n8n | MCP | Управление workflow через MCP | https://n8n.kurumi.software/mcp/cfd90fc7-90c4-4c2b-8086-436443cdd71e |
 
 ### Tailscale IPs:
-- ubuntu-vps: 100.103.222.127
-- kurumi (CachyOS): 100.80.124.27
-- macbook-air (n8n+Ollama): 100.94.92.23
+- ubuntu-vps: YOUR_TAILSCALE_IP_NODE2
+- kurumi (CachyOS): YOUR_TAILSCALE_IP_NODE3
+- macbook-air (n8n+Ollama): YOUR_TAILSCALE_IP_NODE1
 
 ### DNS:
-- n8n.kurumi.software → 159.65.122.92 (VPS)
+- n8n.kurumi.software → YOUR_VPS_PUBLIC_IP (VPS)
 - api.kurumi.software → не создан (не нужен, NestJS доступен через Tailscale)
 
 ### Key decision:
@@ -186,8 +186,8 @@ curl https://n8n.kurumi.software/nestjs-api/health
 - AI управляет n8n через MCP
 - Bitrix24 OAuth Application:
 - Portal: hackathon-team-xx.bitrix24.ru
-- Client ID: local.69d869d2c008b9.92913433
-- Client Secret: 8hBVq9suhSK0mZRPhSBxotz2PKi0cgTH39EBLuRqCy9GinDunl
+- Client ID: YOUR_CLIENT_ID
+- Client Secret: YOUR_CLIENT_SECRET
 - Handler URL: https://n8n.kurumi.software/webhook/routing-message
 - Scopes: crm, user, imopenlines, imbot, im, tasks, task
 - Type: Серверное (Server Application)
@@ -236,7 +236,7 @@ curl https://n8n.kurumi.software/nestjs-api/health
 ### What was done today (2026-04-09 evening — Integration Session)
 1. ✅ **PrismaService fixed** — убран global singleton, prepared statements conflict resolved
 2. ✅ **Ollama model fixed** — `qwen2.5:14b-instruct` → `qwen2.5:14b`, timeout 60s
-3. ✅ **Nginx proxy setup** — `/nestjs-api/` → NestJS через VPS (159.65.122.92)
+3. ✅ **Nginx proxy setup** — `/nestjs-api/` → NestJS через VPS (YOUR_VPS_PUBLIC_IP)
 4. ✅ **n8n workflow updated** — URL на `https://n8n.kurumi.software/nestjs-api/routing/route`
 5. ✅ **Transfer Session → Notify Manager** — заменён `imopenlines.session.transfer` на `im.message.add`
 6. ✅ **UFW rule** — открыт порт 3001 для Tailscale
@@ -281,7 +281,7 @@ PrismaService не инжектится в сервисы через NestJS DI �
 - ✅ 348 тестов проходят
 
 ### Bitrix24 Webhook Note
-На Bitrix24 настроен только один исходящий вебхук: `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/`
+На Bitrix24 настроен только один исходящий вебхук: `https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/`
 Это нужно учитывать при интеграции — все вызовы к Bitrix24 идут через этот webhook.
 
 ---
@@ -289,14 +289,14 @@ PrismaService не инжектится в сервисы через NestJS DI �
 ## ✅ n8n OAuth2 Credential Setup (2026-04-10 08:00)
 
 ### Credential
-- **ID:** `7NqOd5ODFj6VHx2O`
+- **ID:** `YOUR_N8N_CREDENTIAL_ID`
 - **Name:** `Bitrix24 OAuth (hackathon-team-xx)`
 - **Type:** `oAuth2Api` (n8n generic credential)
 - **Grant Type:** `authorizationCode`
-- **authUrl:** `https://b24-p0ujtw.bitrix24.ru/oauth/authorize/`
-- **accessTokenUrl:** `https://b24-p0ujtw.bitrix24.ru/oauth/token/`
-- **Client ID:** `local.69d869d2c008b9.92913433`
-- **Client Secret:** `8hBVq9suhSK0mZRPhSBxotz2PKi0cgTH39EBLuRqCy9GinDunl`
+- **authUrl:** `https://YOUR-PORTAL.bitrix24.ru/oauth/authorize/`
+- **accessTokenUrl:** `https://YOUR-PORTAL.bitrix24.ru/oauth/token/`
+- **Client ID:** `YOUR_CLIENT_ID`
+- **Client Secret:** `YOUR_CLIENT_SECRET`
 - **Scope:** `crm im task imopenlines imbot tasks user`
 
 ### 6 nод обновлены (webhook URL → OAuth credential)
@@ -345,16 +345,16 @@ Workflow `Esa9RuyUEMchzlf0` деактивирован — Open Lines не по�
 
 ### Что сделано:
 - ✅ Workflow создан с нуля: Webhook → Extract Data → NestJS Routing → IF → (Notify Manager + Create Task) / Auto Reply
-- ✅ OAuth2 credential `7NqOd5ODFj6VHx2O` привязана к Notify Manager, Create Task, Auto Reply
+- ✅ OAuth2 credential `YOUR_N8N_CREDENTIAL_ID` привязана к Notify Manager, Create Task, Auto Reply
 - ✅ NestJS запущен (PID 336539, порт 3001, Ollama warmed up)
 - ✅ NestJS Routing работает при прямом вызове (curl → NestJS OK)
 
 ### Что НЕ работает (осталось починить):
-1. **502 Bad Gateway** — n8n → VPS proxy → NestJS не проходит. nginx на VPS (159.65.122.92) не проксирует `/nestjs-api/` на Tailscale IP NestJS.
+1. **502 Bad Gateway** — n8n → VPS proxy → NestJS не проходит. nginx на VPS (YOUR_VPS_PUBLIC_IP) не проксирует `/nestjs-api/` на Tailscale IP NestJS.
    - Нужно: проверить/починить nginx конфиг на VPS для `location /nestjs-api/`
 2. **Extract Data пустые поля** — в тестовом режиме n8n webhook данные приходят в другом формате. Code node не находит `data.MESSAGES[0].TEXT`.
    - Нужно: отладить в n8n UI — посмотреть что реально приходит в Webhook node input
-3. **NestJS Routing URL** — сейчас `https://n8n.kurumi.software/nestjs-api/routing/route` (VPS proxy). Альтернатива: прямой Tailscale `http://100.80.124.27:3001/api/routing/route` (но MacBook → CachyOS через Tailscale может не работать)
+3. **NestJS Routing URL** — сейчас `https://n8n.kurumi.software/nestjs-api/routing/route` (VPS proxy). Альтернатива: прямой Tailscale `http://YOUR_TAILSCALE_IP_NODE3:3001/api/routing/route` (но MacBook → CachyOS через Tailscale может не работать)
 
 ### Следующие шаги:
 1. На MacBook (n8n): в UI посмотреть что приходит в Webhook node → поправить Extract Data Code

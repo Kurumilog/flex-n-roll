@@ -9,7 +9,7 @@ FlexRouter AI — система умной AI-маршрутизации вхо
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │                    BITRIX24 (облако)                           │
-│           hackathon-team-xx.bitrix24.ru                        │
+│           YOUR-PORTAL.bitrix24.ru                              │
 │     Open Lines: Telegram / WhatsApp / Email                    │
 └──────────┬───────────────────────────┬─────────────────────────┘
            │ webhook (HTTPS)           │ REST API (исходящие)
@@ -19,7 +19,7 @@ FlexRouter AI — система умной AI-маршрутизации вхо
 │  DigitalOcean           │   │  n8n local (:5678)               │
 │  Nginx + SSL            │   │  Ollama (qwen2.5:14b-instruct)  │
 │  Tailscale node         │   │  OLLAMA_NUM_PARALLEL=4           │
-│                         │   │  Tailscale: 100.x.x.x            │
+│                         │   │  Tailscale: YOUR_TAILSCALE_IP    │
 │  Форвардит HTTPS →      │   └────────────┬─────────────────────┘
 │  Tailscale на MacBook   │                │ Tailscale
 └──────────┬──────────────┘                │
@@ -30,7 +30,7 @@ FlexRouter AI — система умной AI-маршрутизации вхо
 │  ТВОЙ СЕРВЕР (ноутбук/сервер)                                │
 │  NestJS API (:3000) — FlexRouter backend                     │
 │  Supabase (PostgreSQL) — через cloud connection              │
-│  Tailscale: 100.x.x.x                                        │
+│  Tailscale: YOUR_TAILSCALE_IP                                │
 │                                                              │
 │  /api/employees   — менеджеры (KPI, доступность)             │
 │  /api/routing     — AI маршрутизация                         │
@@ -173,7 +173,7 @@ Flexnroll/
 | `DATABASE_URL` | строка подключения к PostgreSQL (Supabase) | Supabase dashboard |
 | `BITRIX24_WEBHOOK_URL` | webhook для Битрикс24 REST API | Bitrix24 → Маркетплейс |
 | `BITRIX24_INCOMING_SECRET` | секрет для валидации входящих событий | Bitrix24 → Маркетплейс |
-| `OLLAMA_BASE_URL` | URL Ollama API (Tailscale IP MacBook друга) | `http://100.x.x.x:11434` |
+| `OLLAMA_BASE_URL` | URL Ollama API (Tailscale IP MacBook друга) | `http://YOUR_TAILSCALE_IP:11434` |
 | `OLLAMA_ROUTING_MODEL` | модель для маршрутизации | `qwen2.5:14b` |
 | `OLLAMA_TIMEOUT_MS` | таймаут Ollama в мс (60000) | local |
 | `SMTP_HOST` | SMTP сервер для рассылок | gmail/outlook |
@@ -182,7 +182,7 @@ Flexnroll/
 | `SMTP_PASS` | SMTP пароль (app-specific) | local |
 | `SMTP_FROM` | From адрес для рассылок | local |
 | `API_SECRET_KEY` | ключ для защиты endpoints от n8n | generated |
-| `N8N_BASE_URL` | URL n8n (Tailscale IP MacBook друга) | `http://100.x.x.x:5678` |
+| `N8N_BASE_URL` | URL n8n (Tailscale IP MacBook друга) | `http://YOUR_TAILSCALE_IP:5678` |
 
 ## Команды
 

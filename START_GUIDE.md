@@ -6,7 +6,7 @@
 
 Проект состоит из трех связанных частей:
 1. **Node 1 (Workflow & AI):** MacBook M4 с `n8n` и `Ollama` (модель `qwen2.5:14b`).
-2. **Node 2 (Reverse Proxy & Dashboard):** VPS-сервер (VPS: `159.65.122.92`, домен: `dashboard.kurumi.software`). Раздает статику React-дашборда и проксирует API-запросы по защищенному туннелю Tailscale.
+2. **Node 2 (Reverse Proxy & Dashboard):** VPS-сервер (VPS: `YOUR_VPS_PUBLIC_IP`, домен: `dashboard.kurumi.software`). Раздает статику React-дашборда и проксирует API-запросы по защищенному туннелю Tailscale.
 3. **Node 3 (Core API & DB):** Основной NestJS-сервер (порт 3001), который работает локально у разработчика и ходит в базу `Supabase` (PostgreSQL).
 
 🚨 **Обязательное условие:** Все три машины должны находиться в одной Mesh-сети (у нас используется **Tailscale**).
@@ -48,7 +48,7 @@
    ```bash
    ollama run qwen2.5:14b
    ```
-   *(Или убедитесь, что сервис Ollama активен и доступен по `http://100.94.92.23:11434`)*
+   *(Или убедитесь, что сервис Ollama активен и доступен по `http://YOUR_TAILSCALE_IP:11434`)*
 
 2. **Запуск n8n:**
    ```bash
@@ -71,7 +71,7 @@ VPS уже настроен на проксирование трафика.
 
 1. Проверьте статус Nginx на VPS:
    ```bash
-   ssh root@159.65.122.92 "systemctl status nginx"
+   ssh root@YOUR_VPS_PUBLIC_IP "systemctl status nginx"
    ```
 2. Проверьте доступность API через VPS:
    ```bash
@@ -117,7 +117,7 @@ curl -X POST http://localhost:3001/api/sync/leads \
 ## 🔧 Возможные проблемы и их решение
 
 - **n8n не может достучаться до API:**
-  Убедитесь, что Tailscale запущен на обеих машинах. Пинг от MacBook к серверу (`ping 100.80.124.27`) должен проходить.
+  Убедитесь, что Tailscale запущен на обеих машинах. Пинг от MacBook к серверу (`ping YOUR_TAILSCALE_IP`) должен проходить.
 
 - **Ollama отвечает слишком долго / Timeout:**
   Моделям `qwen2.5:14b` нужно время на разогрев. Отправьте тестовый запрос перед началом презентации, чтобы модель закэшировалась в памяти.

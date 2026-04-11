@@ -29,7 +29,7 @@
 
 ### 2.1 Порт 3000 → 3001 (4 воркфлоу)
 
-Все HTTP Request ноды с URL `http://100.80.124.27:3000/api/*` обновлены на `http://100.80.124.27:3001/api/*`.
+Все HTTP Request ноды с URL `http://YOUR_TAILSCALE_IP:3000/api/*` обновлены на `http://YOUR_TAILSCALE_IP:3001/api/*`.
 
 **Метод:** GET/PUT workflow через n8n REST API v1.
 

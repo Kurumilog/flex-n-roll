@@ -67,7 +67,7 @@ X-N8N-API-KEY: <API_KEY>
 {
   "parameters": {
     "method": "GET",
-    "url": "http://100.80.124.27:3001/api/employees/available",
+    "url": "http://YOUR_TAILSCALE_IP:3001/api/employees/available",
     "sendHeaders": true,
     "headerParameters": {
       "parameters": [
@@ -96,7 +96,7 @@ X-N8N-API-KEY: <API_KEY>
 {
   "parameters": {
     "method": "POST",
-    "url": "https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/crm.timeline.item.ad",
+    "url": "https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/crm.timeline.item.ad",
     "sendBody": true,
     "contentType": "multipart-form-data",
     "bodyParameters": {
@@ -249,26 +249,26 @@ curl -s -X GET "https://n8n.kurumi.software/api/v1/workflows/{id}" \
 ## Architecture Context
 
 ### n8n Instance Location
-- **Хостится:** MacBook M4 (друг) — 100.94.92.23:5678
+- **Хостится:** MacBook M4 (друг) — YOUR_TAILSCALE_IP:5678
 - **Доступ:** Через VPS kurumi.software (Nginx + SSL + Tailscale)
 - **Публичный URL:** https://n8n.kurumi.software
 
 ### NestJS Access from n8n
-- **NestJS URL:** `http://100.80.124.27:3001` (Tailscale IP) — **порт 3001, не 3000!**
+- **NestJS URL:** `http://YOUR_TAILSCALE_IP:3001` (Tailscale IP) — **порт 3001, не 3000!**
 - **API Key:** `dev-secret-key-change-in-production` (из .env)
 - **Header:** `x-api-key: <API_SECRET_KEY>`
 
 ### Bitrix24 Access
-- **Webhook (deprecated):** `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt`
-- **OAuth Credential:** `Bitrix24 OAuth (hackathon-team-xx)` — ID: `7NqOd5ODFj6VHx2O`
+- **Webhook (deprecated):** `https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE`
+- **OAuth Credential:** `Bitrix24 OAuth (hackathon-team-xx)` — ID: `YOUR_N8N_CREDENTIAL_ID`
   - Тип: `oAuth2Api` (n8n generic credential)
   - Grant Type: `authorizationCode`
-  - Portal: `https://b24-p0ujtw.bitrix24.ru`
-  - Client ID: `local.69d869d2c008b9.92913433`
+  - Portal: `https://YOUR-PORTAL.bitrix24.ru`
+  - Client ID: `YOUR_CLIENT_ID`
   - Scope: `crm im task imopenlines imbot tasks user`
   - **Auto-refresh:** n8n автоматически обновляет access_token через refresh_token при 401
   - **Все 6 Bitrix24 HTTP Request нод** используют эту credential (не статический токен)
-- **URL формат нод:** `https://b24-p0ujtw.bitrix24.ru/rest/{method}` (без `?auth=` — credential добавляет автоматически)
+- **URL формат нод:** `https://YOUR-PORTAL.bitrix24.ru/rest/{method}` (без `?auth=` — credential добавляет автоматически)
 
 #### ⚠️ n8n PUT Workflow API Caveats
 - **PUT body accepts ONLY:** `name`, `nodes`, `connections`, `settings`

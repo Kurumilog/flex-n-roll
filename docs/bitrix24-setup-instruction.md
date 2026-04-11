@@ -1,10 +1,10 @@
 # Инструкция: Настройка Bitrix24 для FlexRouter AI
 
 > **Дата:** 2026-04-10
-> **Портал:** `b24-p0ujtw.bitrix24.ru` (реальный домен портала)
-> **Текущий webhook:** `https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/`
+> **Портал:** `YOUR-PORTAL.bitrix24.ru` (реальный домен портала)
+> **Текущий webhook:** `https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/`
 > **Текущие scope:** `crm`, `im`, `task`, `user`
-> **OAuth приложение:** создано (Client ID: `local.69d869d2c008b9.92913433`), авторизация требует OAuth
+> **OAuth приложение:** создано (Client ID: `YOUR_CLIENT_ID`), авторизация требует OAuth
 
 ---
 
@@ -33,10 +33,10 @@
 
 ### Шаг 1: Открой Bitrix24
 
-1. Зайди в `b24-p0ujtw.bitrix24.ru`
+1. Зайди в `YOUR-PORTAL.bitrix24.ru`
 2. Убедись что ты **администратор** портала
 3. Перейди: **Разработчикам** → **Другое** → **Исходящий вебхук**
-   - Или напрямую: `https://b24-p0ujtw.bitrix24.ru/marketplace/hook/`
+   - Или напрямую: `https://YOUR-PORTAL.bitrix24.ru/marketplace/hook/`
 
 ### Шаг 2: Создай новый вебхук
 
@@ -66,7 +66,7 @@
 
 После сохранения Bitrix24 покажет URL вида:
 ```
-https://b24-p0ujtw.bitrix24.ru/rest/1/XXXXXXXXXXXXX/
+https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/
 ```
 
 **Скопируй этот URL** — он понадобится для обновления `.env.local`.
@@ -81,7 +81,7 @@ nano .env.local
 
 Обнови:
 ```env
-BITRIX24_WEBHOOK_URL=https://hackathon-team-xx.bitrix24.ru/rest/1/XXXXXXXXXXXXX/
+BITRIX24_WEBHOOK_URL=https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/
 ```
 
 Перезапусти NestJS:
@@ -98,9 +98,9 @@ pkill -f "nest start" && pnpm dev
 
 ### Шаг 1: Создай приложение
 
-1. Зайди в `b24-p0ujtw.bitrix24.ru`
+1. Зайди в `YOUR-PORTAL.bitrix24.ru`
 2. Перейди: **Маркетплейс** → **Разработчикам** → **Создать приложение**
-   - Или: `https://b24-p0ujtw.bitrix24.ru/marketplace/app/`
+   - Или: `https://YOUR-PORTAL.bitrix24.ru/marketplace/app/`
 3. Выбери тип: **Локальное приложение**
 4. Заполни:
    - **Название:** `FlexRouter AI`
@@ -118,46 +118,46 @@ pkill -f "nest start" && pnpm dev
 ### Шаг 3: Получи Client ID и Secret
 
 После создания приложение покажет:
-- **Client ID:** `local.xxxxx.xxxxx`
-- **Client Secret:** `xxxxxxxxxxxxxxxx`
+- **Client ID:** `YOUR_CLIENT_ID`
+- **Client Secret:** `YOUR_CLIENT_SECRET`
 
 ### Шаг 4: Получи OAuth токен
 
 Выполни в браузере:
 ```
-https://b24-p0ujtw.bitrix24.ru/oauth/authorize?client_id=LOCAL_CLIENT_ID&response_type=code
+https://YOUR-PORTAL.bitrix24.ru/oauth/authorize?client_id=YOUR_CLIENT_ID&response_type=code
 ```
 
 Нажми **Разрешить** → получишь `code` в URL.
 
 Обменяй code на token:
 ```bash
-curl -X POST "https://b24-p0ujtw.bitrix24.ru/oauth/token" \
+curl -X POST "https://YOUR-PORTAL.bitrix24.ru/oauth/token" \
   -H "Content-Type: application/x-www-form-urlencoded" \
   -d "grant_type=authorization_code" \
-  -d "client_id=LOCAL_CLIENT_ID" \
-  -d "client_secret=LOCAL_CLIENT_SECRET" \
+  -d "client_id=YOUR_CLIENT_ID" \
+  -d "client_secret=YOUR_CLIENT_SECRET" \
   -d "code=CODE_FROM_REDIRECT"
 ```
 
 Получишь:
 ```json
 {
-  "access_token": "xxxxx",
-  "refresh_token": "xxxxx",
+  "access_token": "YOUR_ACCESS_TOKEN",
+  "refresh_token": "YOUR_REFRESH_TOKEN",
   "expires_in": 3600,
   "scope": "crm,imopenlines,im,task,user",
-  "domain": "hackathon-team-xx.bitrix24.ru"
+  "domain": "YOUR-PORTAL.bitrix24.ru"
 }
 ```
 
 ### Шаг 5: Зарегистрируй event handler
 
 ```bash
-curl -X POST "https://b24-p0ujtw.bitrix24.ru/rest/event.bind" \
+curl -X POST "https://YOUR-PORTAL.bitrix24.ru/rest/event.bind" \
   -H "Content-Type: application/json" \
   -d '{
-    "auth": "ACCESS_TOKEN",
+    "auth": "YOUR_ACCESS_TOKEN",
     "event": "ONIMCONNECTORMESSAGEADD",
     "handler": "https://n8n.kurumi.software/webhook/routing-message"
   }'
@@ -176,16 +176,16 @@ curl -X POST "https://b24-p0ujtw.bitrix24.ru/rest/event.bind" \
 В каждом n8n HTTP Request node для Bitrix24 замени URL:
 ```
 # Было (webhook):
-https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/imopenlines.session.transfer
+https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/imopenlines.session.transfer
 
 # Стало (OAuth):
-https://hackathon-team-xx.bitrix24.ru/rest/imopenlines.session.transfer
+https://YOUR-PORTAL.bitrix24.ru/rest/imopenlines.session.transfer
 ```
 
 И добавь параметр `auth` в body:
 ```json
 {
-  "auth": "ACCESS_TOKEN",
+  "auth": "YOUR_ACCESS_TOKEN",
   "id": "...",
   "to": "..."
 }
@@ -199,14 +199,14 @@ https://hackathon-team-xx.bitrix24.ru/rest/imopenlines.session.transfer
 
 ```bash
 # Должен вернуть информацию о портале
-curl -s "https://b24-p0ujtw.bitrix24.ru/rest/1/XXXXXXXXXXXXX/profile.json" | jq .
+curl -s "https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/profile.json" | jq .
 ```
 
 ### 2. Проверь Open Lines подключение
 
 ```bash
 # Должен вернуть список открытых линий
-curl -s -X POST "https://b24-p0ujtw.bitrix24.ru/rest/1/XXXXXXXXXXXXX/imopenlines.network.list" \
+curl -s -X POST "https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/imopenlines.network.list" \
   -H "Content-Type: application/json" | jq .
 ```
 
@@ -215,9 +215,9 @@ curl -s -X POST "https://b24-p0ujtw.bitrix24.ru/rest/1/XXXXXXXXXXXXX/imopenlines
 ```bash
 # Для webhook — список обработчиков недоступен через webhook API
 # Для OAuth приложения:
-curl -s -X POST "https://b24-p0ujtw.bitrix24.ru/rest/event.list" \
+curl -s -X POST "https://YOUR-PORTAL.bitrix24.ru/rest/event.list" \
   -H "Content-Type: application/json" \
-  -d '{"auth": "ACCESS_TOKEN", "event": "ONIMCONNECTORMESSAGEADD"}' | jq .
+  -d '{"auth": "YOUR_ACCESS_TOKEN", "event": "ONIMCONNECTORMESSAGEADD"}' | jq .
 ```
 
 ### 4. Полный тест

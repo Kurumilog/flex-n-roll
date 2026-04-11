@@ -76,19 +76,19 @@
 ## 2. Архитектура
 
 ```
-Bitrix24 (hackathon-team-xx.bitrix24.ru)
+Bitrix24 (YOUR-PORTAL.bitrix24.ru)
   │
   │ iframe src="https://dashboard.kurumi.software"
   │ + auth params в URL (auth[access_token], auth[user_id], auth[member_id]...)
   │
   ▼
-dashboard.kurumi.software (Nginx на VPS 159.65.122.92)
+dashboard.kurumi.software (Nginx на VPS YOUR_VPS_PUBLIC_IP)
   │
   │ location /          → static файлы (React build)
-  │ location /api/      → proxy_pass http://100.80.124.27:3001 (NestJS через Tailscale)
+  │ location /api/      → proxy_pass http://YOUR_TAILSCALE_IP:3001 (NestJS через Tailscale)
   │
   ▼
-NestJS API (:3001) на сервере пользователя (100.80.124.27)
+NestJS API (:3001) на сервере пользователя (YOUR_TAILSCALE_IP)
   │
   ├── GET  /api/dashboard/summary    → агрегация: менеджеры + KPI + статистика
   ├── GET  /api/bitrix/open-sessions → прокси к BitrixService.getOpenSessions()
@@ -125,7 +125,7 @@ NestJS API (:3001) на сервере пользователя (100.80.124.27)
 
 ## 4. Nginx на VPS
 
-**Домен:** `dashboard.kurumi.software` → DNS A-запись на `159.65.122.92`
+**Домен:** `dashboard.kurumi.software` → DNS A-запись на `YOUR_VPS_PUBLIC_IP`
 
 **Конфиг (примерный):**
 ```nginx
@@ -146,7 +146,7 @@ server {
 
     # API proxy to NestJS via Tailscale
     location /api/ {
-        proxy_pass http://100.80.124.27:3001/api/;
+        proxy_pass http://YOUR_TAILSCALE_IP:3001/api/;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -348,7 +348,7 @@ cat /etc/nginx/nginx.conf
 ```
 
 ### 7.4 DNS запись
-Нужно создать DNS A-запись: `dashboard.kurumi.software → 159.65.122.92`
+Нужно создать DNS A-запись: `dashboard.kurumi.software → YOUR_VPS_PUBLIC_IP`
 
 ### 7.5 SSL сертификат
 ```bash
@@ -371,7 +371,7 @@ sudo certbot --nginx -d dashboard.kurumi.software
 Все компоненты, API клиент, типы, grid layout, poll логика — готовы и собраны.
 
 ### ✅ Шаг 3 — Nginx + DNS + SSL (ЗАВЕРШЁН)
-1. ✅ Подключиться к VPS (159.65.122.92)
+1. ✅ Подключиться к VPS (YOUR_VPS_PUBLIC_IP)
 2. ✅ Проверить существующий Nginx: `ls /etc/nginx/sites-enabled/` — НЕ сломать существующий сайт
 3. ✅ **Успешный прокси трафика.** API работает по туннелю.
 4. ✅ Скопировать билд на VPS: `dist/dashboard/*` → `/var/www/dashboard/`
@@ -418,12 +418,12 @@ sudo certbot --nginx -d dashboard.kurumi.software
 - `KpiService` — ✅ `getKpiHistory(id)`
 
 ### Архитектура 3 нод
-- **Node 1:** MacBook M4 (друг) — n8n + Ollama (100.94.92.23)
-- **Node 2:** VPS kurumi.software — Nginx + SSL + Tailscale (159.65.122.92 / 100.103.222.127)
-- **Node 3:** Сервер пользователя — NestJS API :3001 + Supabase cloud (100.80.124.27)
+- **Node 1:** MacBook M4 (друг) — n8n + Ollama (YOUR_TAILSCALE_IP)
+- **Node 2:** VPS kurumi.software — Nginx + SSL + Tailscale (YOUR_VPS_PUBLIC_IP / YOUR_TAILSCALE_IP)
+- **Node 3:** Сервер пользователя — NestJS API :3001 + Supabase cloud (YOUR_TAILSCALE_IP)
 
 ### Bitrix24
-- Портал: `hackathon-team-xx.bitrix24.ru`
+- Портал: `YOUR-PORTAL.bitrix24.ru`
 - Webhook: уже настроен (используется для BitrixService)
 - Тариф: Trial (REST API работает)
 - Scope: `crm`, `task`, `user`, `im`
@@ -457,7 +457,7 @@ sudo certbot --nginx -d dashboard.kurumi.software
 - **Вариант Б. Основной пайплайн маршрутизации (Routing):** Настроить вебхук в n8n, принимающий сообщения от новых диалогов в Bitrix24, передающий их в Ollama/NestJS (`POST /api/routing/route`), и возвращающий запрос в Bitrix24 (`im.message.add` или `crm.lead.add` и т.д.).
 
 **Важные нюансы интеграции:**
-- Авторизация между n8n и NestJS API идёт через HTTP Header `x-api-key: <API_SECRET_KEY>` (ключ лежит в `.env.local`). Без него API откинет запросы n8n с кодом `401`.
+- Авторизация между n8n и NestJS API идёт через HTTP Header `x-api-key: YOUR_API_SECRET_KEY` (ключ лежит в `.env.local`). Без него API откинет запросы n8n с кодом `401`.
 - Обязательно сверяйся с `AGENTS.md` для корректных URL и DTO, чтобы n8n отправлял валидные JSON payload.
 
 Удачного кодинга! Если сломается база — проверь `.env.local` на предмет `connection_limit`.

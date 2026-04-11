@@ -7,7 +7,7 @@
  * Что делает:
  * 1. Убирает ?auth=TOKEN из URL
  * 2. Добавляет authentication: genericCredentialType + genericAuthType: oAuth2Api
- * 3. Привязывает credential 7NqOd5ODFj6VHx2O
+ * 3. Привязывает credential YOUR_N8N_CREDENTIAL_ID
  *
  * Usage: node scripts/update-n8n-bitrix-oauth-credential.js
  */
@@ -19,9 +19,9 @@ const N8N_BASE_URL = 'https://n8n.kurumi.software';
 const N8N_API_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNjOGUyZi1lODgzLTQ4ZTUtODIwZi1mNTdlMDU0OGY2ZWMiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiM2FjZjJkMDMtZWFlNC00OTUyLWIxYmYtNTRlZTE3NjQ3YzYzIiwiaWF0IjoxNzc1NzI5MjMyLCJleHAiOjE3NzgyOTkyMDB9.kmG6Wz8tMErpmMA7n-PTbjaQ3NEfxHSTcIP6vRE50cM';
 
-const CREDENTIAL_ID = '7NqOd5ODFj6VHx2O';
+const CREDENTIAL_ID = 'YOUR_N8N_CREDENTIAL_ID';
 const CREDENTIAL_NAME = 'Bitrix24 OAuth (hackathon-team-xx)';
-const BITRIX24_PORTAL = 'https://b24-p0ujtw.bitrix24.ru';
+const BITRIX24_PORTAL = 'https://YOUR-PORTAL.bitrix24.ru';
 
 // Workflows and nodes to update
 const WORKFLOWS_TO_UPDATE = [
@@ -85,8 +85,8 @@ function n8nRequest(method, path, body = null) {
 }
 
 function cleanUrl(oldUrl) {
-  // =https://b24-p0ujtw.bitrix24.ru/rest/im.message.add?auth=TOKEN
-  // → =https://b24-p0ujtw.bitrix24.ru/rest/im.message.add
+  // =https://YOUR-PORTAL.bitrix24.ru/rest/im.message.add?auth=TOKEN
+  // -> =https://YOUR-PORTAL.bitrix24.ru/rest/im.message.add
   const isExpression = oldUrl.startsWith('=');
   let url = isExpression ? oldUrl.substring(1) : oldUrl;
 
@@ -137,9 +137,9 @@ function updateNodesInWorkflow(workflow, nodeNames) {
       continue;
     }
 
-    if (!oldUrl.includes('b24-p0ujtw.bitrix24.ru')) {
+    if (!oldUrl.includes('YOUR-PORTAL.bitrix24.ru')) {
       console.warn(
-        `⚠️  Node "${node.name}" URL doesn't contain b24-p0ujtw, skipping: ${oldUrl}`
+        `⚠️  Node "${node.name}" URL doesn't contain YOUR-PORTAL, skipping: ${oldUrl}`
       );
       continue;
     }

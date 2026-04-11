@@ -22,7 +22,7 @@ async function main() {
   transferNode.typeVersion = 4.4;
   transferNode.parameters = {
     method: 'POST',
-    url: '=https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/im.message.add',
+    url: '=https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/im.message.add',
     sendBody: true,
     contentType: 'application/json',
     specifyBody: 'json',

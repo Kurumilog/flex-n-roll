@@ -10,7 +10,7 @@
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        Bitrix24 Cloud                               │
-│               hackathon-team-xx.bitrix24.ru                         │
+│               YOUR-PORTAL.bitrix24.ru                         │
 │  Open Lines (Telegram / WhatsApp / Email)                           │
 │  CRM (Leads / Deals / Contacts)                                     │
 │  Tasks & Activities                                                 │
@@ -18,14 +18,14 @@
                │ Webhook (ONOPENLINEMESSAGEADD)
                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  Node 2: VPS kurumi.software (159.65.122.92)                        │
+│  Node 2: VPS kurumi.software (YOUR_VPS_PUBLIC_IP)                        │
 │  Nginx + SSL + Tailscale                                             │
 │  Форвардит HTTPS → MacBook M4                                        │
 └──────────────┬──────────────────────────────────────────────────────┘
                │ Tailscale (100.x.x.x)
                ▼
 ┌─────────────────────────────────────────────────────────────────────┐
-│  Node 1: MacBook M4 (100.94.92.23)                                  │
+│  Node 1: MacBook M4 (YOUR_TAILSCALE_IP)                                  │
 │  ┌──────────────┐    ┌──────────────────────────────────────────┐   │
 │  │     n8n      │    │             Ollama                        │   │
 │  │  :5678       │    │        :11434                             │   │
@@ -35,7 +35,7 @@
 │         │ Tailscale                                                  │
 │         ▼                                                            │
 │  ┌──────────────────────────────────────────────────────────────┐   │
-│  │  Node 3: Твой сервер (100.80.124.27)                          │   │
+│  │  Node 3: Твой сервер (YOUR_TAILSCALE_IP)                          │   │
 │  │  ┌──────────────┐    ┌────────────────────────────────────┐  │   │
 │  │  │   NestJS API │    │       Supabase (Cloud)             │  │   │
 │  │  │   :3000      │    │   postgresql://db.xxx.supabase.co  │  │   │
@@ -61,7 +61,7 @@
 | n8n → NestJS | HTTP POST | `POST /api/routing/route` с x-api-key |
 | n8n → Bitrix24 | HTTP POST | `crm.lead.add`, `imopenlines.session.transfer`, `tasks.task.add`, `im.message.add` |
 | NestJS → Bitrix24 | **ПРЯМОЙ HTTPS** | BitrixService: `crm.lead.list`, `crm.deal.list`, `crm.lead.update`, и т.д. |
-| NestJS → Ollama | Tailscale прямой | `POST http://100.94.92.23:11434/api/chat` |
+| NestJS → Ollama | Tailscale прямой | `POST http://YOUR_TAILSCALE_IP:11434/api/chat` |
 | NestJS → n8n | HTTP POST | `POST https://n8n.kurumi.software/webhook/{name}` (N8nService) |
 | AI (я) → n8n | MCP | Управление workflow через MCP |
 
@@ -131,7 +131,7 @@ n8n IF: managerId != null?
 
 Приоритет 2: LLM-маршрутизация  ← ВОТ ТУТ OLLAMA!
   → OllamaService.chat(prompt, systemPrompt)
-  → POST http://100.94.92.23:11434/api/chat
+  → POST http://YOUR_TAILSCALE_IP:11434/api/chat
   → Модель: qwen2.5:14b-instruct
   → temperature: 0.1, num_predict: 500
   → Промпт: "Классифицируй запрос, выбери менеджера"
@@ -152,7 +152,7 @@ n8n IF: managerId != null?
 **Шаг 1:** Зарегистрировать обработчик событий (ОДИН РАЗ)
 
 ```bash
-curl -X POST "https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/event.bind" \
+curl -X POST "https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/event.bind" \
   -H "Content-Type: application/json" \
   -d '{
     "event": "ONOPENLINEMESSAGEADD",
@@ -301,7 +301,7 @@ N8nService **ещё не реализован** в коде. Это следую
 ### 8.1. Конфигурация
 
 ```
-URL: http://100.94.92.23:11434 (Tailscale IP MacBook)
+URL: http://YOUR_TAILSCALE_IP:11434 (Tailscale IP MacBook)
 Model: qwen2.5:14b-instruct
 Timeout: 15000ms
 Temperature: 0.1 (детерминированный)
@@ -338,7 +338,7 @@ Max tokens: 500
 
 ### Шаг 1: Зарегистрировать Bitrix24 event handler
 ```bash
-curl -X POST "https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/event.bind" \
+curl -X POST "https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/event.bind" \
   -H "Content-Type: application/json" \
   -d '{"event": "ONOPENLINEMESSAGEADD", "handler": "https://n8n.kurumi.software/webhook/Citrix-leads"}'
 ```

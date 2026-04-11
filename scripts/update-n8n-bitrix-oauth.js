@@ -1,7 +1,7 @@
 /**
  * update-n8n-bitrix-oauth.js
  *
- * Заменяет Bitrix24 webhook URL (rest/1/9591mae2cb8qecvt/method)
+ * Заменяет Bitrix24 webhook URL (rest/1/YOUR_WEBHOOK_CODE/method)
  * на OAuth URL (rest/method?auth=ACCESS_TOKEN) во всех HTTP Request нодах.
  *
  * Usage: node scripts/update-n8n-bitrix-oauth.js
@@ -16,11 +16,11 @@ const N8N_BASE_URL = 'https://n8n.kurumi.software';
 const N8N_API_KEY =
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3NzNjOGUyZi1lODgzLTQ4ZTUtODIwZi1mNTdlMDU0OGY2ZWMiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiM2FjZjJkMDMtZWFlNC00OTUyLWIxYmYtNTRlZTE3NjQ3YzYzIiwiaWF0IjoxNzc1NzI5MjMyLCJleHAiOjE3NzgyOTkyMDB9.kmG6Wz8tMErpmMA7n-PTbjaQ3NEfxHSTcIP6vRE50cM';
 
-const BITRIX24_PORTAL = 'https://b24-p0ujtw.bitrix24.ru';
+const BITRIX24_PORTAL = 'https://YOUR-PORTAL.bitrix24.ru';
 const BITRIX24_ACCESS_TOKEN =
-  '5c8fd86900834e0c0082d71200000011000007706eb65ec573d2d3f8dec7fa4a831f01';
+  'YOUR_ACCESS_TOKEN';
 
-// Webhook path to remove: /rest/1/9591mae2cb8qecvt/
+// Webhook path to remove: /rest/1/YOUR_WEBHOOK_CODE/
 const WEBHOOK_PATH_REGEX = /\/rest\/1\/[A-Za-z0-9]+\//g;
 
 // Workflows to update: [workflowId, [nodeNames]]
@@ -85,9 +85,9 @@ function n8nRequest(method, path, body = null) {
 }
 
 function transformUrl(oldUrl) {
-  // oldUrl: =https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/im.message.add
-  // or:     https://b24-p0ujtw.bitrix24.ru/rest/1/9591mae2cb8qecvt/crm.lead.get
-  // newUrl: =https://b24-p0ujtw.bitrix24.ru/rest/im.message.add?auth=TOKEN
+  // oldUrl: =https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/im.message.add
+  // or:     https://YOUR-PORTAL.bitrix24.ru/rest/1/YOUR_WEBHOOK_CODE/crm.lead.get
+  // newUrl: =https://YOUR-PORTAL.bitrix24.ru/rest/im.message.add?auth=TOKEN
 
   const isExpression = oldUrl.startsWith('=');
   let url = isExpression ? oldUrl.substring(1) : oldUrl;
@@ -152,9 +152,9 @@ function updateNodesInWorkflow(workflow, nodeNames) {
       continue;
     }
 
-    if (!oldUrl.includes('b24-p0ujtw.bitrix24.ru')) {
+    if (!oldUrl.includes('YOUR-PORTAL.bitrix24.ru')) {
       console.warn(
-        `⚠️  Node "${node.name}" URL doesn't contain b24-p0ujtw, skipping: ${oldUrl}`
+        `⚠️  Node "${node.name}" URL doesn't contain YOUR-PORTAL, skipping: ${oldUrl}`
       );
       continue;
     }

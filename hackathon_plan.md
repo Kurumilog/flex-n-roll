@@ -14,7 +14,7 @@
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                     BITRIX24 (облако)                            │
-│         hackathon-team-xx.bitrix24.ru                            │
+│         YOUR-PORTAL.bitrix24.ru                                  │
 │   Open Lines: Telegram / WhatsApp / Email                        │
 └────────┬────────────────────────────┬────────────────────────────┘
          │ события (webhook, HTTPS)   │ REST API (исходящий)
@@ -109,7 +109,7 @@ Bitrix24 (облако) отправляет события на `https://n8n.ku
    sudo apt install nginx certbot python3-certbot-nginx
    curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up
    sudo certbot --nginx -d n8n.kurumi.software
-   # Nginx config: proxy_pass http://100.x.x.x:5678 (Tailscale IP MacBook)
+   # Nginx config: proxy_pass http://YOUR_TAILSCALE_IP:5678 (Tailscale IP MacBook)
    ```
 
 **Друг (MacBook M4):**
@@ -117,7 +117,7 @@ Bitrix24 (облако) отправляет события на `https://n8n.ku
 2. Запустить и скачать модели:
    ```bash
    OLLAMA_NUM_PARALLEL=4 OLLAMA_MAX_LOADED_MODELS=1 ollama serve
-   ollama pull qwen2.5:14b-instruct
+   ollama pull qwen2.5:14b
    ollama pull nomic-embed-text
    ```
 3. Установить n8n:
@@ -129,7 +129,7 @@ Bitrix24 (облако) отправляет события на `https://n8n.ku
 
 ### Час 2–4: Bitrix24 (друг)
 
-1. Создать портал `hackathon-team-xx.bitrix24.ru`
+1. Создать портал `YOUR-PORTAL.bitrix24.ru`
 2. Режим CRM → Классическая (лиды + сделки)
 3. Создать входящий вебхук, выдать права: `crm`, `im`, `imopenlines`, `task`, `user`
 4. Создать локальное приложение (для событий) → указать URL `https://n8n.kurumi.software/webhook/install`
@@ -236,7 +236,7 @@ n8n Webhook Trigger (https://n8n.kurumi.software/webhook/message)
 n8n HTTP Request → NestJS /api/employees/available
     (возвращает: список менеджеров с KPI, занятостью, историей клиента)
     ↓
-n8n AI Agent → qwen2.5:14b-instruct (Ollama HTTP Request нода)
+n8n AI Agent → qwen2.5:14b (Ollama HTTP Request нода)
     Промпт: [системный промпт с few-shot из dialogs.json]
     → возвращает JSON: { manager_id, reason, urgency, topic }
     ↓

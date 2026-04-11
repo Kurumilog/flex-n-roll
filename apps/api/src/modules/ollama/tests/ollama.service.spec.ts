@@ -20,7 +20,7 @@ jest.mock('axios', () => ({
 const mockConfigService = {
   get: jest.fn((key: string, defaultValue?: any) => {
     const config: Record<string, any> = {
-      OLLAMA_BASE_URL: 'http://100.64.1.5:11434',
+      OLLAMA_BASE_URL: 'http://YOUR_TAILSCALE_IP:11434',
       OLLAMA_ROUTING_MODEL: 'qwen2.5:14b-instruct',
       OLLAMA_TIMEOUT_MS: 15000,
     };
@@ -142,7 +142,7 @@ describe('OllamaService', () => {
 
     it('should throw OllamaUnavailableException on connection refused (ECONNREFUSED)', async () => {
       // arrange
-      const refusedError = Object.assign(new Error('connect ECONNREFUSED 100.64.1.5:11434'), {
+      const refusedError = Object.assign(new Error('connect ECONNREFUSED YOUR_TAILSCALE_IP:11434'), {
         code: 'ECONNREFUSED',
         isAxiosError: true,
       });

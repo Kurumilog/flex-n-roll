@@ -6,18 +6,18 @@
 - **Typecheck:** ✅ Clean
 - **NestJS server:** ✅ RUNNING on port 3001 (PID 324245)
 - **Integration:** n8n → NestJS → Ollama ✅ (полный поток, ~2.5-19s)
-- **n8n OAuth:** ✅ Credential `7NqOd5ODFj6VHx2O` с auto-refresh через refresh_token
+- **n8n OAuth:** ✅ Credential `YOUR_N8N_CREDENTIAL_ID` с auto-refresh через refresh_token
 
 ## ✅ n8n OAuth2 Credential Setup (2026-04-10 08:00)
 
 | Компонент | Детали |
 |-----------|--------|
-| **Credential ID** | `7NqOd5ODFj6VHx2O` |
+| **Credential ID** | `YOUR_N8N_CREDENTIAL_ID` |
 | **Credential Name** | `Bitrix24 OAuth (hackathon-team-xx)` |
 | **Type** | `oAuth2Api` (n8n generic credential) |
 | **Grant Type** | `authorizationCode` |
-| **authUrl** | `https://b24-p0ujtw.bitrix24.ru/oauth/authorize/` |
-| **accessTokenUrl** | `https://b24-p0ujtw.bitrix24.ru/oauth/token/` |
+| **authUrl** | `https://YOUR-PORTAL.bitrix24.ru/oauth/authorize/` |
+| **accessTokenUrl** | `https://YOUR-PORTAL.bitrix24.ru/oauth/token/` |
 | **Refresh Token** | ✅ работает (проверено, возвращает новый access_token + refresh_token) |
 
 **6 нод обновлены** (webhook URL → OAuth credential):
